@@ -1,12 +1,16 @@
-import 'package:bondify/pages/AddProfile.dart';
 import 'package:bondify/pages/HomePage.dart';
 import 'package:bondify/pages/HomePageBuilder.dart';
 import 'package:flutter/material.dart';
+import 'Database/DB.dart';
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main(){
+  final db = DB();
+  await db.initDatabase(); // Wait for database initialization
+
   runApp(MaterialApp(
-    home:HomePage(),
+    home: HomePageBuilder(),
     debugShowCheckedModeBanner: false,
   ));
 }

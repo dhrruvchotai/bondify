@@ -40,6 +40,8 @@ dependencies:
   animated_text_kit:
   simple_animations:
   aswdc_flutter_pub: ^1.0.27
+  sqflite:
+  animate_do: ^3.0.2
 
 dev_dependencies:
   flutter_test:

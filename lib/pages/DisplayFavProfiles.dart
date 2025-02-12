@@ -1,12 +1,6 @@
-import 'package:bondify/pages/AboutUs.dart';
-import 'package:bondify/pages/DisplayAllProfiles.dart';
+import 'package:bondify/Database/DB.dart';
 import 'package:flutter/material.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:line_icons/line_icons.dart';
-import 'AddProfile.dart';
-import 'RegistrationPage.dart';
 import 'String_Utils.dart';
-import 'User.dart';
 
 class DisplayFavUserProfiles extends StatefulWidget {
   const DisplayFavUserProfiles({super.key});
@@ -16,24 +10,32 @@ class DisplayFavUserProfiles extends StatefulWidget {
 }
 
 class _DisplayFavUserProfilesState extends State<DisplayFavUserProfiles> {
-  User users = User(); // Assuming this is your User class
-  List<Map<String, dynamic>> usersList = []; // Corrected List type
-  int _selectedIndex = 2;
+  DB myDatabase = DB();
+  List<Map<String,dynamic>> favUsers = [];
   bool isUserMale = true;
 
   @override
   void initState() { // Corrected method name
     super.initState();
-    // Populate the user list
+    loadFavUsers();
+  }
+
+  Future<void> loadFavUsers() async {
+    await myDatabase.fetchUsersFromUsersTable();
+    fetchFavUsers();
+  }
+
+  Future<void> fetchFavUsers() async{
     setState(() {
-      usersList = users.getUserList();
+      favUsers = myDatabase.usersList.where((user) => user[ISUSERFAV] == 1).toList();
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
     // Filter favorite users first
-    List favUsers = usersList.where((user) => user[ISUSERFAV] == true).toList();
+    List favUsers = myDatabase.usersList.where((user) => user[ISUSERFAV] == 1).toList();
 
     return Scaffold(
       body: SafeArea(
@@ -75,12 +77,13 @@ class _DisplayFavUserProfilesState extends State<DisplayFavUserProfiles> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  user[ISUSERFAV] = !(user[ISUSERFAV] ?? false);
-                                });
+                              onPressed: () async{
+                                int userId = user['id'];
+                                int newFavStatus = (user[ISUSERFAV] == 1) ? 0 : 1;
+                                await myDatabase.makeUserFav(userId, newFavStatus);
+                                await fetchFavUsers();
                               },
-                              icon: (user[ISUSERFAV] ?? true)
+                              icon: (user[ISUSERFAV] == 1)
                                   ? Icon(Icons.favorite, color: Colors.redAccent)
                                   : Icon(Icons.favorite_outline_rounded, color: Colors.redAccent),
                             )
@@ -90,6 +93,7 @@ class _DisplayFavUserProfilesState extends State<DisplayFavUserProfiles> {
                       Column(
                         children: [
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               SizedBox(width: 15,),
                               Icon(Icons.person_2_outlined),
@@ -101,9 +105,12 @@ class _DisplayFavUserProfilesState extends State<DisplayFavUserProfiles> {
                               SizedBox(width: 10,),
                               Text(":"),
                               SizedBox(width: 10,),
-                              Text(
-                                user[FULLNAME],
-                                style: TextStyle(fontSize: 15),
+                              Expanded(
+                                child: Text(
+                                  user[FULLNAME],
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 15),
+                                ),
                               ),
                             ],
                           ),

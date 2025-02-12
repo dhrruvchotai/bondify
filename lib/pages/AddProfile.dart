@@ -1,13 +1,9 @@
+import 'package:bondify/pages/String_Utils.dart';
 import 'package:flutter/material.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:line_icons/line_icon.dart';
-import 'package:line_icons/line_icons.dart';
 import 'package:intl/intl.dart';
-import 'AboutUs.dart';
-import 'DisplayAllProfiles.dart';
-import 'DisplayFavProfiles.dart';
-import 'RegistrationPage.dart';
-import 'User.dart';
+import 'package:line_icons/line_icons.dart';
+import 'String_Utils.dart';
+import '../Database/DB.dart';
 
 class AddProfile extends StatefulWidget {
   @override
@@ -15,9 +11,7 @@ class AddProfile extends StatefulWidget {
 }
 
 class _AddProfileState extends State<AddProfile> {
-
-  User users = User();
-  int _selectedIndex = 0;
+  DB myDatabase = DB();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _dobController = TextEditingController();
   TextEditingController _fullName = TextEditingController();
@@ -28,57 +22,84 @@ class _AddProfileState extends State<AddProfile> {
   String? _city;
   int? _pickedYear;
   List<String> _hobbies = [];
-  final List<String> _hobbiesOptions = ['Playing', 'Singing', 'Dancing', 'Reading'];
+  final List<String> _hobbiesOptions = ['Gaming', 'Singing', 'Dancing', 'Reading','Playing','Cooking'];
+  Map<String, dynamic> user = {};
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Container(
-            margin: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.brown.withOpacity(0.7),
-                  spreadRadius: 5,
-                  blurRadius: 15,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            padding: EdgeInsets.all(20),
-            child: SingleChildScrollView(
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 20),
-                    Text(
-                      'Add Profile',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.redAccent[400],
+      body: Container(
+        decoration: BoxDecoration(
+         color: Colors.white
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header Row Add Profile
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Color(0XFF800f2f).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.person_add,
+                            size: 40,
+                            color: Color(0XFF800f2f),
+                          ),
+                          SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Add Profile',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Enter Information below',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 20),
-                    // Full Name Field
-                    TextFormField(
+                  ),
+                  SizedBox(height: 20,),
+                  Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: Row(
+                      children: [Icon(Icons.person_outline_rounded,size: 30,color: Color(0XFF800f2f),),
+                      SizedBox(width: 10,),
+                      Text('Person Details',style: TextStyle(fontSize: 20),)],
+                    ),
+                  ),
+                  SizedBox(height: 10,),
+                  // Full Name Field
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: TextFormField(
+                      textCapitalization: TextCapitalization.words,
                       controller: _fullName,
-                      maxLength: 50,
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.person_2_outlined),
+                      keyboardType: TextInputType.text,
+                      decoration: _inputDecoration(
                         labelText: 'Full Name',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
+                        prefixIcon: Icons.person_2_outlined,
                       ),
                       validator: (value) {
                         if (value!.isEmpty) {
@@ -87,21 +108,16 @@ class _AddProfileState extends State<AddProfile> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 16),
-                    // Phone Number Field
-                    TextFormField(
+                  ),
+                  // Phone Number Field
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: TextFormField(
                       controller: _phoneNumber,
-                      maxLength: 10,
                       keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.phone_outlined),
+                      decoration: _inputDecoration(
                         labelText: 'Phone Number',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
+                        prefixIcon: Icons.phone_outlined,
                       ),
                       validator: (value) {
                         if (value!.isEmpty) {
@@ -112,20 +128,16 @@ class _AddProfileState extends State<AddProfile> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 16),
-                    // Email Field
-                    TextFormField(
+                  ),
+                  // Email Field
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: TextFormField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.email_outlined),
-                        labelText: 'Email',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
+                      decoration: _inputDecoration(
+                        labelText: 'Email Address',
+                        prefixIcon: Icons.email_outlined,
                       ),
                       validator: (value) {
                         if (value!.isEmpty) {
@@ -135,22 +147,27 @@ class _AddProfileState extends State<AddProfile> {
                         }
                         return null;
                       },
-
                     ),
-                    SizedBox(height: 16),
-                    // Date of Birth Field
-                    TextFormField(
+                  ),
+                  // Date of Birth Field
+                  SizedBox(height: 20,),
+                  Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: Row(
+                      children: [Icon(Icons.cake_outlined,size: 30,color: Color(0XFF800f2f),),
+                        SizedBox(width: 10,),
+                        Text('Birth Date',style: TextStyle(fontSize: 20),)],
+                    ),
+                  ),
+                  SizedBox(height: 10,),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: TextFormField(
                       readOnly: true,
                       controller: _dobController,
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.calendar_today_outlined),
+                      decoration: _inputDecoration(
                         labelText: 'Date of Birth',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
+                        prefixIcon: Icons.calendar_today_outlined,
                       ),
                       onTap: () async {
                         DateTime? pickedDate = await showDatePicker(
@@ -170,71 +187,79 @@ class _AddProfileState extends State<AddProfile> {
                         if (value!.isEmpty) {
                           return 'Please select your date of birth';
                         }
-                        if((DateTime.now().year - _pickedYear!) < 18){
-                          return 'Age must me above 18 years!!';
+                        if ((DateTime.now().year - _pickedYear!) < 18) {
+                          return 'Age must be above 18 years!!';
                         }
                         return null;
                       },
                     ),
-                    SizedBox(height: 16),
-                    // Gender Field
-                    FormField<String>(
+                  ),
+                  SizedBox(height: 20,),
+                  Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: Row(
+                      children: [Icon(Icons.cake_outlined,size: 30,color: Color(0XFF800f2f),),
+                        SizedBox(width: 10,),
+                        Text('Gender',style: TextStyle(fontSize: 20),)],
+                    ),
+                  ),
+                  SizedBox(height: 10,),
+                  // Gender Field
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: FormField<String>(
                       builder: (FormFieldState<String> state) {
-                        return Column(
-                          children: [
-                            InputDecorator(
-                              decoration: InputDecoration(
-                                prefixIcon: Icon(Icons.wc_outlined),
-                                labelText: 'Gender',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                errorText: state.errorText,
-                              ),
-                              child: Row(
+                        return InputDecorator(
+                          decoration: _inputDecoration(
+                            labelText: 'Gender',
+                            prefixIcon: Icons.wc_outlined,
+                          ).copyWith(errorText: state.errorText),
+                          child: Wrap(
+                            spacing: 16,
+                            runSpacing: 8,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  SizedBox(width: 18,),
-                                  Row(
-                                    children: [
-                                      Radio<String>(
-                                        value: 'Male',
-                                        groupValue: _gender,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _gender = value;
-                                            state.didChange(value);
-                                          });
-                                        },
-                                      ),
-                                      Text('Male',style: TextStyle(fontSize: 17,)),
-                                    ],
-                                    mainAxisSize: MainAxisSize.min,
+                                  Radio<String>(
+                                    value: 'Male',
+                                    groupValue: _gender,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _gender = value;
+                                        state.didChange(value);
+                                      });
+                                    },
+                                    activeColor: Color(0XFFa4133c),
                                   ),
-                                  SizedBox(width: 18,),
-                                  Row(
-                                    children: [
-                                      Radio<String>(
-                                        value: 'Female',
-                                        groupValue: _gender,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _gender = value;
-                                            state.didChange(value);
-                                          });
-                                        },
-                                      ),
-                                      Text('Female',style: TextStyle(fontSize: 17),),
-                                    ],
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                  Text(
+                                    'Male',
+                                    style: TextStyle(fontSize: 16, color: Colors.black87),
                                   ),
                                 ],
-                                mainAxisAlignment: MainAxisAlignment.center,
                               ),
-                            ),
-                          ],
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Radio<String>(
+                                    value: 'Female',
+                                    groupValue: _gender,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _gender = value;
+                                        state.didChange(value);
+                                      });
+                                    },
+                                    activeColor: Color(0XFFa4133c),
+                                  ),
+                                  Text(
+                                    'Female',
+                                    style: TextStyle(fontSize: 16, color: Colors.black87),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         );
                       },
                       validator: (value) {
@@ -244,42 +269,45 @@ class _AddProfileState extends State<AddProfile> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 16),
-                    // Religion Field
-                    TextFormField(
-                      controller: _religion,
-                      maxLength: 30,
-                      decoration: InputDecoration(
-                        labelText: 'Religion',
-                        prefixIcon: LineIcon.placeOfWorship(),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter your religion';
-                        }
-                        return null;
-                      },
+                  ),
+                  // Religion Field
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  //   child: TextFormField(
+                  //     controller: _religion,
+                  //     maxLength: 30,
+                  //     decoration: _inputDecoration(
+                  //       labelText: 'Religion',
+                  //       prefixIcon: LineIcons.church,
+                  //     ),
+                  //     validator: (value) {
+                  //       if (value!.isEmpty) {
+                  //         return 'Please enter your religion';
+                  //       }
+                  //       return null;
+                  //     },
+                  //   ),
+                  // ),
+                  // City Dropdown Field
+                  SizedBox(height: 20,),
+                  Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: Row(
+                      children: [Icon(Icons.location_city_outlined,size: 30,color: Color(0XFF800f2f),),
+                        SizedBox(width: 10,),
+                        Text('City',style: TextStyle(fontSize: 20),)],
                     ),
-                    SizedBox(height: 16),
-                    //city field dropdown
-                    DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.location_city_rounded),
+                  ),
+                  SizedBox(height: 10,),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: DropdownButtonFormField<String>(
+                      decoration: _inputDecoration(
                         labelText: 'City',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
                       ),
-                      items: [  "Ahmedabad",
+                      icon: Icon(Icons.arrow_drop_down),
+                      items: [
+                        "Ahmedabad",
                         "Surat",
                         "Vadodara",
                         "Rajkot",
@@ -355,11 +383,17 @@ class _AddProfileState extends State<AddProfile> {
                         "Bilkha",
                         "Okha",
                         "Jhalod",
-                        "Mangrol (Junagadh)"]
-                          .map((city) => DropdownMenuItem<String>(
-                        value: city,
-                        child: Text(city),
-                      ))
+                        "Mangrol (Junagadh)"
+                      ]
+                          .map(
+                            (city) => DropdownMenuItem<String>(
+                          value: city,
+                          child: Text(
+                            city,
+                            style: TextStyle(color: Colors.black87),
+                          ),
+                        ),
+                      )
                           .toList(),
                       onChanged: (value) {
                         _city = value;
@@ -371,110 +405,62 @@ class _AddProfileState extends State<AddProfile> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 16),
-                    // Hobbies Field
-                    FormField(
+                  ),
+                  // Hobbies Field
+                  SizedBox(height: 20,),
+                  Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: Row(
+                      children: [Icon(Icons.interests,size: 30,color: Color(0XFF800f2f),),
+                        SizedBox(width: 10,),
+                        Text('Hobbies',style: TextStyle(fontSize: 20),)],
+                    ),
+                  ),
+                  SizedBox(height: 12,),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: FormField(
                       builder: (FormFieldState state) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            InputDecorator(
-                              decoration: InputDecoration(
-                                prefixIcon: Icon(Icons.sports_soccer_outlined),
-                                labelText: 'Hobbies',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
+                        return InputDecorator(
+                          decoration: _inputDecoration(
+                            labelText: 'Hobbies',
+                          ).copyWith(errorText: state.errorText),
+                          child: Wrap(
+                            spacing: 19, // Horizontal spacing between buttons
+                            runSpacing: 8, // Vertical spacing between buttons
+                            children: _hobbiesOptions.map((hobby) {
+                              return ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    if (_hobbies.contains(hobby)) {
+                                      _hobbies.remove(hobby); // Deselect if already selected
+                                    } else {
+                                      _hobbies.add(hobby); // Select if not already selected
+                                    }
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _hobbies.contains(hobby)
+                                      ? Color(0XFFc9184a).withOpacity(0.7) // Selected state
+                                      : Color(0XFF800f2f).withOpacity(0.2), // Unselected state
+                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 0,
                                 ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                errorText: state.errorText,
+                                child: Text(
+                                  hobby,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: _hobbies.contains(hobby)
+                                      ? Colors.white // Text color for selected state
+                                      : Colors.black87, // Text color for unselected state
+                                ),
                               ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                        child: CheckboxListTile(
-                                          title: Text('Playing', style: TextStyle(fontSize: 17)),
-                                          value: _hobbies.contains('Playing'),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              if (value == true) {
-                                                _hobbies.add('Playing');
-                                              } else {
-                                                _hobbies.remove('Playing');
-                                              }
-                                            });
-                                          },
-                                          controlAffinity: ListTileControlAffinity.leading, // Places the checkbox on the left
-                                          contentPadding: EdgeInsets.zero, // Removes extra padding
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: CheckboxListTile(
-                                          title: Text('Singing', style: TextStyle(fontSize: 17)),
-                                          value: _hobbies.contains('Singing'),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              if (value == true) {
-                                                _hobbies.add('Singing');
-                                              } else {
-                                                _hobbies.remove('Singing');
-                                              }
-                                            });
-                                          },
-                                          controlAffinity: ListTileControlAffinity.leading,
-                                          contentPadding: EdgeInsets.zero,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: CheckboxListTile(
-                                          title: Text('Dancing', style: TextStyle(fontSize: 17)),
-                                          value: _hobbies.contains('Dancing'),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              if (value == true) {
-                                                _hobbies.add('Dancing');
-                                              } else {
-                                                _hobbies.remove('Dancing');
-                                              }
-                                            });
-                                          },
-                                          controlAffinity: ListTileControlAffinity.leading,
-                                          contentPadding: EdgeInsets.zero,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: CheckboxListTile(
-                                          title: Text('Reading', style: TextStyle(fontSize: 17)),
-                                          value: _hobbies.contains('Reading'),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              if (value == true) {
-                                                _hobbies.add('Reading');
-                                              } else {
-                                                _hobbies.remove('Reading');
-                                              }
-                                            });
-                                          },
-                                          controlAffinity: ListTileControlAffinity.leading,
-                                          contentPadding: EdgeInsets.zero,
-                                        ),
-                                      ),
-                                    ],
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                              );
+                            }).toList(),
+                          ),
                         );
                       },
                       validator: (value) {
@@ -484,51 +470,100 @@ class _AddProfileState extends State<AddProfile> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 20),
-                    // Submit Button
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            setState(() {
-                              users.addUserInList(fullname: _fullName.text, phone: _phoneNumber.text, email: _email.text, dob: _dobController.text, gender: _gender, religion: _religion.text, city: _city,hobbies: _hobbies,isUserFav: false);
-                              _fullName.clear();
-                              _phoneNumber.clear();
-                              _email.clear();
-                              _dobController.clear();
-                              _religion.clear();
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Profile submitted successfully!')),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          elevation: 5,
-                          textStyle: TextStyle(fontSize: 18),
-                        ),
-                        child: Text(
-                          'Submit',
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
+                  ),
+                  SizedBox(height: 24),
+                  // Submit Button
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        _formKey.currentState!.save();
+                        setState(() {
+                          user[FULLNAME] = _fullName.text;
+                          user[PHONE] = _phoneNumber.text;
+                          user[EMAIL] = _email.text;
+                          user[DOB] = _dobController.text;
+                          user[GENDER] = _gender;
+                          user[RELIGION] = _religion.text;
+                          user[CITY] = _city;
+                          user[HOBBIES] = _hobbies.join(",");
+                          myDatabase.addUserInUsersTable(user);
+
+                          // Clear the form fields after submission.
+                          _fullName.clear();
+                          _phoneNumber.clear();
+                          _email.clear();
+                          _dobController.clear();
+                          _religion.clear();
+                          _gender = null;
+                          _city = null;
+                          _hobbies.clear();
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Profile submitted successfully!')),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0XFFa4133c),
+                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 3,
+                    ),
+                    child: Text(
+                      'Submit Profile',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
                       ),
                     ),
-                    SizedBox(height: 20),
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 24),
+                ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+
+  InputDecoration _inputDecoration({labelText, prefixIcon}) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: TextStyle(color: Colors.black54),
+      prefixIcon: prefixIcon != null ?
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          padding: EdgeInsets.all(2),
+          decoration: BoxDecoration(
+              color:Color(0XFFffb3c1).withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8)
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Icon(prefixIcon, color: Color(0XFF590d22)),
+          ),
+        ),
+      ) : null,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Color(0XFF590d22), width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: EdgeInsets.symmetric(vertical: 18.0, horizontal: 20.0),
     );
   }
 }

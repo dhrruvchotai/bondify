@@ -1,13 +1,7 @@
-import 'package:bondify/pages/AboutUs.dart';
+import 'package:bondify/Database/DB.dart';
 import 'package:flutter/material.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:line_icons/line_icons.dart';
-
-import 'AddProfile.dart';
-import 'DisplayFavProfiles.dart';
-import 'RegistrationPage.dart';
 import 'String_Utils.dart';
-import 'User.dart';
+import 'package:intl/intl.dart';
 
 class UserProfiles extends StatefulWidget {
   const UserProfiles({super.key});
@@ -17,137 +11,917 @@ class UserProfiles extends StatefulWidget {
 }
 
 class _UserProfilesState extends State<UserProfiles> {
-  User users = User(); // Assuming this is your User class
-  List<Map<String, dynamic>> usersList = []; // Corrected List type
+  DB myDatabase = DB();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  List<Map<String, dynamic>> searchUsersList = [];
+  String searchValue = "";
+  TextEditingController SearchController = TextEditingController();
+  List<Map<String, dynamic>> currentUsersList = [];
+  final TextEditingController _dobController = TextEditingController();
+  TextEditingController _fullName = TextEditingController();
+  TextEditingController _phoneNumber = TextEditingController();
+  TextEditingController _email = TextEditingController();
+  TextEditingController _religion = TextEditingController();
+  String? _gender;
+  String? _city;
+  int? _pickedYear;
+  List<String> _hobbies = [];
+  final List<String> _hobbiesOptions = ['Gaming', 'Singing', 'Dancing', 'Reading','Playing','Cooking'];
+  Map<String, dynamic> user = {};
 
   @override
-  void initState() { // Corrected method name
+  void initState() {
     super.initState();
-     // Populate the user list
-    setState(() {
-      usersList = users.getUserList();
-    });
+    fetchUsers();
+  }
+
+  Future<void> fetchUsers() async {
+    await myDatabase.fetchUsersFromUsersTable();
+    currentUsersList = myDatabase.usersList; // Initially, display all users
+    setState(() {});
+  }
+
+  void searchUser(String searchData) {
+    searchUsersList.clear(); // Clear previous search results
+    if (searchData.isEmpty) {
+      currentUsersList = myDatabase.usersList; // If search is empty, show all users
+    } else {
+      for (var element in myDatabase.usersList) {
+        if (element[FULLNAME]
+            .toString()
+            .toLowerCase()
+            .contains(searchData.toString().toLowerCase())) {
+          searchUsersList.add(element);
+        }
+      }
+      currentUsersList = searchUsersList; // Update current list with search results
+    }
+    setState(() {}); // Rebuild the widget to reflect changes
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Container(
-            decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.brown[100]!,
-                    Colors.brown[50]!,
-                    Colors.brown[200]!,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-            ),
-            child: usersList.isEmpty
-                ? Center(
-                  child: Text(
-                    'No profiles available.',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+          child: Column(
+            children: [
+              // Header Row for User Profiles
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  // Reduced width of the header container
+                  width: MediaQuery.of(context).size.width * 0.8, // Example: 90% of screen width
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Color(0XFF800f2f).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.group_outlined,
+                        size: 40,
+                        color: Color(0XFF800f2f),
+                      ),
+                      SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'User Profiles',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'List of Bondify Users', // Added user count here
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: TextFormField(
+                  controller: SearchController,
+                  onChanged: (value) {
+                    searchValue = value;
+                    searchUser(value);
+                  },
+                  decoration: InputDecoration(
+                      hintText: "Search user",
+                      hintStyle: TextStyle(color: Colors.black54),
+                      prefixIcon: Icon(Icons.search, color: Color(0XFF590d22),size: 35,),
+                      suffixIcon: IconButton(onPressed: (){
+                        SearchController.clear();
+                        searchUsersList.clear();
+                        searchValue = "";
+                        currentUsersList = List.from(myDatabase.usersList);
+                        setState(() {});
+                      }, icon: Icon(Icons.cancel_outlined,color: Color(0XFF590d22),)),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0XFF800f2f)),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0XFF800f2f), width: 2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      )
+                  ),
+                ),
+              ),
+              Expanded(
+                child: currentUsersList.isEmpty
+                    ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Center(child: Icon(Icons.search_off_outlined, size: 100, color: Color(0XFF590d22).withOpacity(0.4))),
+                      Center(
+                        child: Text(
+                          'No profiles available.',
+                          style: TextStyle(fontSize: 18, color: Color(0XFF590d22).withOpacity(0.4)),
+                        ),
+                      ),
+                    ],
                   ),
                 )
-                : ListView.builder(
-              itemCount: usersList.length,
-              itemBuilder: (context, index) {
-                var user = usersList[index];
-                return Padding(
-                  padding: const EdgeInsets.all(13.0),
-                  child: Card(
-                    elevation: 5,
-                    borderOnForeground: true,
-                    color: Colors.brown[100],
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10,top:10),
+                    : ListView.builder(
+                  itemCount: currentUsersList.length,
+                  itemBuilder: (context, index) {
+                    var user = currentUsersList[index];
+                    return InkWell(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 8.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Color(0XFFc9184a).withOpacity(0.1),
+                            border:Border.all(color: Colors.black38),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                spreadRadius: 1,
+                                blurRadius: 2,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          margin: EdgeInsets.symmetric(vertical: 6),
                           child: Row(
                             children: [
-                              Icon(Icons.person_2_outlined)
+                              _buildUserAvatar(user[FULLNAME]),
+                              SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  user[FULLNAME],
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    visualDensity : VisualDensity.compact,
+                                    onPressed: () {
+                                      showModalBottomSheet(context: context,isScrollControlled: true,
+                                        builder: (context) {
+                                          return DraggableScrollableSheet(
+                                            initialChildSize: 1, // Full height
+                                            minChildSize: 0.5, // Minimum height when dragged down
+                                            maxChildSize: 1, // Maximum height
+                                            builder: (_, controller) {
+                                              return SafeArea(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(12.0),
+                                                  child: Container(
+                                                    height: 400,
+                                                    child: SingleChildScrollView(
+                                                      scrollDirection: Axis.vertical,
+                                                      child: Column(
+                                                        children: [
+                                                          IconButton(onPressed: (){
+                                                            Naviga
+                                                          }, icon: Icon(Icons.cancel_outlined))
+                                                          Padding(
+                                                            padding: const EdgeInsets.all(2.0),
+                                                            child: Row(
+                                                              children: [Icon(Icons.person_outline_rounded,size: 30,color: Color(0XFF800f2f),),
+                                                                SizedBox(width: 10,),
+                                                                Text('Person Details',style: TextStyle(fontSize: 20),)],
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 10,),
+                                                          // Full Name Field
+                                                          Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                            child: TextFormField(
+                                                              textCapitalization: TextCapitalization.words,
+                                                              controller: _fullName,
+                                                              keyboardType: TextInputType.text,
+                                                              decoration: _inputDecoration(
+                                                                labelText: 'Full Name',
+                                                                prefixIcon: Icons.person_2_outlined,
+                                                              ),
+                                                              validator: (value) {
+                                                                if (value!.isEmpty) {
+                                                                  return 'Please enter your full name';
+                                                                }
+                                                                return null;
+                                                              },
+                                                            ),
+                                                          ),
+                                                          // Phone Number Field
+                                                          Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                            child: TextFormField(
+                                                              controller: _phoneNumber,
+                                                              keyboardType: TextInputType.phone,
+                                                              decoration: _inputDecoration(
+                                                                labelText: 'Phone Number',
+                                                                prefixIcon: Icons.phone_outlined,
+                                                              ),
+                                                              validator: (value) {
+                                                                if (value!.isEmpty) {
+                                                                  return 'Please enter your phone number';
+                                                                } else if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                                                                  return 'Please enter a valid 10-digit phone number';
+                                                                }
+                                                                return null;
+                                                              },
+                                                            ),
+                                                          ),
+                                                          // Email Field
+                                                          Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                            child: TextFormField(
+                                                              controller: _email,
+                                                              keyboardType: TextInputType.emailAddress,
+                                                              decoration: _inputDecoration(
+                                                                labelText: 'Email Address',
+                                                                prefixIcon: Icons.email_outlined,
+                                                              ),
+                                                              validator: (value) {
+                                                                if (value!.isEmpty) {
+                                                                  return 'Please enter your email';
+                                                                } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                                                                  return 'Please enter a valid email';
+                                                                }
+                                                                return null;
+                                                              },
+                                                            ),
+                                                          ),
+                                                          // Date of Birth Field
+                                                          SizedBox(height: 20,),
+                                                          Padding(
+                                                            padding: const EdgeInsets.all(2.0),
+                                                            child: Row(
+                                                              children: [Icon(Icons.cake_outlined,size: 30,color: Color(0XFF800f2f),),
+                                                                SizedBox(width: 10,),
+                                                                Text('Birth Date',style: TextStyle(fontSize: 20),)],
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 10,),
+                                                          Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                            child: TextFormField(
+                                                              readOnly: true,
+                                                              controller: _dobController,
+                                                              decoration: _inputDecoration(
+                                                                labelText: 'Date of Birth',
+                                                                prefixIcon: Icons.calendar_today_outlined,
+                                                              ),
+                                                              onTap: () async {
+                                                                DateTime? pickedDate = await showDatePicker(
+                                                                  context: context,
+                                                                  initialDate: DateTime.now(),
+                                                                  firstDate: DateTime(1900),
+                                                                  lastDate: DateTime.now(),
+                                                                );
+                                                                if (pickedDate != null) {
+                                                                  setState(() {
+                                                                    _pickedYear = pickedDate.year;
+                                                                    _dobController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
+                                                                  });
+                                                                }
+                                                              },
+                                                              validator: (value) {
+                                                                if (value!.isEmpty) {
+                                                                  return 'Please select your date of birth';
+                                                                }
+                                                                if ((DateTime.now().year - _pickedYear!) < 18) {
+                                                                  return 'Age must be above 18 years!!';
+                                                                }
+                                                                return null;
+                                                              },
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 20,),
+                                                          Padding(
+                                                            padding: const EdgeInsets.all(2.0),
+                                                            child: Row(
+                                                              children: [Icon(Icons.cake_outlined,size: 30,color: Color(0XFF800f2f),),
+                                                                SizedBox(width: 10,),
+                                                                Text('Gender',style: TextStyle(fontSize: 20),)],
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 10,),
+                                                          // Gender Field
+                                                          Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                            child: FormField<String>(
+                                                              builder: (FormFieldState<String> state) {
+                                                                return InputDecorator(
+                                                                  decoration: _inputDecoration(
+                                                                    labelText: 'Gender',
+                                                                    prefixIcon: Icons.wc_outlined,
+                                                                  ).copyWith(errorText: state.errorText),
+                                                                  child: Wrap(
+                                                                    spacing: 16,
+                                                                    runSpacing: 8,
+                                                                    children: [
+                                                                      Row(
+                                                                        mainAxisSize: MainAxisSize.min,
+                                                                        children: [
+                                                                          Radio<String>(
+                                                                            value: 'Male',
+                                                                            groupValue: _gender,
+                                                                            onChanged: (value) {
+                                                                              setState(() {
+                                                                                _gender = value;
+                                                                                state.didChange(value);
+                                                                              });
+                                                                            },
+                                                                            activeColor: Color(0XFFa4133c),
+                                                                          ),
+                                                                          Text(
+                                                                            'Male',
+                                                                            style: TextStyle(fontSize: 16, color: Colors.black87),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                      Row(
+                                                                        mainAxisSize: MainAxisSize.min,
+                                                                        children: [
+                                                                          Radio<String>(
+                                                                            value: 'Female',
+                                                                            groupValue: _gender,
+                                                                            onChanged: (value) {
+                                                                              setState(() {
+                                                                                _gender = value;
+                                                                                state.didChange(value);
+                                                                              });
+                                                                            },
+                                                                            activeColor: Color(0XFFa4133c),
+                                                                          ),
+                                                                          Text(
+                                                                            'Female',
+                                                                            style: TextStyle(fontSize: 16, color: Colors.black87),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                );
+                                                              },
+                                                              validator: (value) {
+                                                                if (_gender == null) {
+                                                                  return 'Please select your gender';
+                                                                }
+                                                                return null;
+                                                              },
+                                                            ),
+                                                          ),
+                                                          // Religion Field
+                                                          // Padding(
+                                                          //   padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                          //   child: TextFormField(
+                                                          //     controller: _religion,
+                                                          //     maxLength: 30,
+                                                          //     decoration: _inputDecoration(
+                                                          //       labelText: 'Religion',
+                                                          //       prefixIcon: LineIcons.church,
+                                                          //     ),
+                                                          //     validator: (value) {
+                                                          //       if (value!.isEmpty) {
+                                                          //         return 'Please enter your religion';
+                                                          //       }
+                                                          //       return null;
+                                                          //     },
+                                                          //   ),
+                                                          // ),
+                                                          // City Dropdown Field
+                                                          SizedBox(height: 20,),
+                                                          Padding(
+                                                            padding: const EdgeInsets.all(2.0),
+                                                            child: Row(
+                                                              children: [Icon(Icons.location_city_outlined,size: 30,color: Color(0XFF800f2f),),
+                                                                SizedBox(width: 10,),
+                                                                Text('City',style: TextStyle(fontSize: 20),)],
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 10,),
+                                                          Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                            child: DropdownButtonFormField<String>(
+                                                              decoration: _inputDecoration(
+                                                                labelText: 'City',
+                                                              ),
+                                                              icon: Icon(Icons.arrow_drop_down),
+                                                              items: [
+                                                                "Ahmedabad",
+                                                                "Surat",
+                                                                "Vadodara",
+                                                                "Rajkot",
+                                                                "Bhavnagar",
+                                                                "Jamnagar",
+                                                                "Junagadh",
+                                                                "Gandhinagar",
+                                                                "Anand",
+                                                                "Morbi",
+                                                                "Nadiad",
+                                                                "Mehsana",
+                                                                "Bharuch",
+                                                                "Navsari",
+                                                                "Porbandar",
+                                                                "Vapi",
+                                                                "Valsad",
+                                                                "Palanpur",
+                                                                "Gondal",
+                                                                "Godhra",
+                                                                "Veraval",
+                                                                "Patan",
+                                                                "Kalol",
+                                                                "Dahod",
+                                                                "Botad",
+                                                                "Amreli",
+                                                                "Surendranagar",
+                                                                "Himatnagar",
+                                                                "Modasa",
+                                                                "Mahesana",
+                                                                "Dwarka",
+                                                                "Mandvi",
+                                                                "Ankleshwar",
+                                                                "Deesa",
+                                                                "Bhuj",
+                                                                "Kadi",
+                                                                "Visnagar",
+                                                                "Dholka",
+                                                                "Sanand",
+                                                                "Wadhwan",
+                                                                "Unjha",
+                                                                "Halol",
+                                                                "Chhota Udaipur",
+                                                                "Lunawada",
+                                                                "Savarkundla",
+                                                                "Mahuva",
+                                                                "Manavadar",
+                                                                "Viramgam",
+                                                                "Bodeli",
+                                                                "Jetpur",
+                                                                "Dhoraji",
+                                                                "Jasdan",
+                                                                "Khambhat",
+                                                                "Keshod",
+                                                                "Talaja",
+                                                                "Mangrol",
+                                                                "Bagasara",
+                                                                "Umreth",
+                                                                "Sihor",
+                                                                "Petlad",
+                                                                "Gadhada",
+                                                                "Bhanvad",
+                                                                "Vijapur",
+                                                                "Radhanpur",
+                                                                "Kutch",
+                                                                "Kapadvanj",
+                                                                "Tharad",
+                                                                "Bayad",
+                                                                "Idar",
+                                                                "Mansa",
+                                                                "Dabhoi",
+                                                                "Karjan",
+                                                                "Songadh",
+                                                                "Bilkha",
+                                                                "Okha",
+                                                                "Jhalod",
+                                                                "Mangrol (Junagadh)"
+                                                              ]
+                                                                  .map(
+                                                                    (city) => DropdownMenuItem<String>(
+                                                                  value: city,
+                                                                  child: Text(
+                                                                    city,
+                                                                    style: TextStyle(color: Colors.black87),
+                                                                  ),
+                                                                ),
+                                                              )
+                                                                  .toList(),
+                                                              onChanged: (value) {
+                                                                _city = value;
+                                                              },
+                                                              validator: (value) {
+                                                                if (value == null || value.isEmpty) {
+                                                                  return 'Please select your city';
+                                                                }
+                                                                return null;
+                                                              },
+                                                            ),
+                                                          ),
+                                                          // Hobbies Field
+                                                          SizedBox(height: 20,),
+                                                          Padding(
+                                                            padding: const EdgeInsets.all(2.0),
+                                                            child: Row(
+                                                              children: [Icon(Icons.interests,size: 30,color: Color(0XFF800f2f),),
+                                                                SizedBox(width: 10,),
+                                                                Text('Hobbies',style: TextStyle(fontSize: 20),)],
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 12,),
+                                                          Padding(
+                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                            child: FormField(
+                                                              builder: (FormFieldState state) {
+                                                                return InputDecorator(
+                                                                  decoration: _inputDecoration(
+                                                                    labelText: 'Hobbies',
+                                                                  ).copyWith(errorText: state.errorText),
+                                                                  child: Wrap(
+                                                                    spacing: 19, // Horizontal spacing between buttons
+                                                                    runSpacing: 8, // Vertical spacing between buttons
+                                                                    children: _hobbiesOptions.map((hobby) {
+                                                                      return ElevatedButton(
+                                                                        onPressed: () {
+                                                                          setState(() {
+                                                                            if (_hobbies.contains(hobby)) {
+                                                                              _hobbies.remove(hobby); // Deselect if already selected
+                                                                            } else {
+                                                                              _hobbies.add(hobby); // Select if not already selected
+                                                                            }
+                                                                          });
+                                                                        },
+                                                                        style: ElevatedButton.styleFrom(
+                                                                          backgroundColor: _hobbies.contains(hobby)
+                                                                              ? Color(0XFFc9184a).withOpacity(0.7) // Selected state
+                                                                              : Color(0XFF800f2f).withOpacity(0.2), // Unselected state
+                                                                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                                                          shape: RoundedRectangleBorder(
+                                                                            borderRadius: BorderRadius.circular(20),
+                                                                          ),
+                                                                          elevation: 0,
+                                                                        ),
+                                                                        child: Text(
+                                                                          hobby,
+                                                                          style: TextStyle(
+                                                                            fontSize: 14,
+                                                                            color: _hobbies.contains(hobby)
+                                                                                ? Colors.white // Text color for selected state
+                                                                                : Colors.black87, // Text color for unselected state
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    }).toList(),
+                                                                  ),
+                                                                );
+                                                              },
+                                                              validator: (value) {
+                                                                if (_hobbies.isEmpty) {
+                                                                  return 'Please select at least one hobby';
+                                                                }
+                                                                return null;
+                                                              },
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 24),
+                                                          // Submit Button
+                                                          ElevatedButton(
+                                                            onPressed: () {
+                                                              if (_formKey.currentState!.validate()) {
+                                                                _formKey.currentState!.save();
+                                                                setState(() {
+                                                                  user[FULLNAME] = _fullName.text;
+                                                                  user[PHONE] = _phoneNumber.text;
+                                                                  user[EMAIL] = _email.text;
+                                                                  user[DOB] = _dobController.text;
+                                                                  user[GENDER] = _gender;
+                                                                  user[RELIGION] = _religion.text;
+                                                                  user[CITY] = _city;
+                                                                  user[HOBBIES] = _hobbies.join(",");
+                                                                  myDatabase.addUserInUsersTable(user);
+                                                
+                                                                  // // Clear the form fields after submission.
+                                                                  // _fullName.clear();
+                                                                  // _phoneNumber.clear();
+                                                                  // _email.clear();
+                                                                  // _dobController.clear();
+                                                                  // _religion.clear();
+                                                                  // _gender = null;
+                                                                  // _city = null;
+                                                                  // _hobbies.clear();
+                                                                });
+                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                  SnackBar(content: Text('Profile submitted successfully!')),
+                                                                );
+                                                              }
+                                                            },
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor: Color(0XFFa4133c),
+                                                              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                                                              shape: RoundedRectangleBorder(
+                                                                borderRadius: BorderRadius.circular(12),
+                                                              ),
+                                                              elevation: 3,
+                                                            ),
+                                                            child: Text(
+                                                              'Submit Profile',
+                                                              style: TextStyle(
+                                                                color: Colors.white,
+                                                                fontSize: 18,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 24),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                      },);
+                                      ;
+                                    },
+                                    icon: Icon(Icons.edit, color: Colors.brown[700], size: 28,),
+                                  ),
+                                  IconButton(
+                                    visualDensity : VisualDensity.compact,
+                                    onPressed: () async {
+                                      int userId = user['id'];
+                                      int newFavStatus = (user[ISUSERFAV] == 1) ? 0 : 1;
+                                      await myDatabase.makeUserFav(userId, newFavStatus);
+                                      await fetchUsers();
+                                    },
+                                    icon: (user[ISUSERFAV] == 1)
+                                        ? Icon(Icons.favorite, color: Colors.redAccent, size: 26,)
+                                        : Icon(Icons.favorite_outline_rounded, color: Colors.brown[700], size: 28,),
+                                  ),
+                                  IconButton(
+                                    visualDensity : VisualDensity.compact,
+                                    onPressed: () async {
+                                      int userId = user['id'];
+                                      return showDialog<void>(
+                                        context: context,
+                                        barrierDismissible: false, // user must tap button!
+                                        builder: (BuildContext context) {
+                                          return SizedBox(
+                                            width: 600,
+                                            child: AlertDialog(
+                                              backgroundColor: Color(0XFFfff0f3),
+                                              title: Row(
+                                                children: [
+                                                  Icon(Icons.delete,color: Color(0XFFa4133c),size: 35,),
+                                                  SizedBox(width: 10,),
+                                                  const Text('Are You Sure ?',style: TextStyle(color: Color(0XFFc9184a)),),
+                                                ],
+                                              ),
+                                              content: const SingleChildScrollView(
+                                                child: ListBody(
+                                                  children: <Widget>[
+                                                    Text('You are going to remove the User!!',style: TextStyle(color: Colors.black54),),
+                                                  ],
+                                                ),
+                                              ),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  child: const Text('Yes, Remove user!',style: TextStyle(color: Color(0XFFa4133c)),),
+                                                  onPressed: () {
+                                                    myDatabase.deleteUserFromUsersTable(userId);
+                                                    fetchUsers();
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                TextButton(onPressed: (){
+                                                  Navigator.of(context).pop();
+                                                }, child: Text('Cancel',style: TextStyle(color: Colors.black),))
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                    icon: Icon(Icons.delete, color: Colors.brown[700], size: 28,),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
-                        Row(
-                          children: [
-                            SizedBox(width: 60,),
-                            Text(
-                              "Fullname",
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(width: 10,),
-                            Text(":"),
-                            SizedBox(width: 10,),
-                            Text(
-                              user[FULLNAME],
-                              style: TextStyle(fontSize: 15),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 3,),
-                        Row(
-                          children: [
-                            SizedBox(width: 60,),
-                            Text(
-                              "Email",
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(width: 10,),
-                            Text(":"),
-                            SizedBox(width: 10,),
-                            Text(
-                              user[EMAIL],
-                              style: TextStyle(fontSize: 15),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment:MainAxisAlignment.end,
-                          children: [
-                            SizedBox(width: 15,),
-                            Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 7),
-                                  child: IconButton(onPressed: (){
-                                    setState(() {
-                                      users.deleteUser(index);
-                                    });
-                                  }, icon:Icon(Icons.delete)),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 6),
-                                  child: IconButton(
-                                    onPressed: (){
-                                      setState(() {
-                                        user[ISUSERFAV] = !(user[ISUSERFAV] ?? false);;
-                                      });
-                                    }, icon:(user[ISUSERFAV] ?? false) ? Icon(Icons.favorite, color: Colors.redAccent)
-                                      : Icon(Icons.favorite_outline_rounded, color: Colors.redAccent),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 6,left: 10),
-                                  child: Text("View Full Details"),
-                                ),
-                              ],
-                            ),
-                            IconButton(onPressed: (){
-                            }, icon: Icon(Icons.arrow_forward_ios))
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                      ),
+                      onTap: () {
+                        _showFullDetailsBottomSheet(context, user);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  // Helper widget for circular user avatar
+  Widget _buildUserAvatar(String fullName) {
+    String firstLetter = fullName.isNotEmpty ? fullName[0].toUpperCase() : '?';
+    return CircleAvatar(
+      radius: 28,
+      backgroundColor: Color(0XFFa4133c),
+      child: Text(
+        firstLetter,
+        style: TextStyle(
+          fontSize: 24,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // Function to show the bottom sheet for full details (updated)
+  void _showFullDetailsBottomSheet(BuildContext context, Map<String, dynamic> user) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Color(0XFFfff0f3).withOpacity(0.98), // Set background to white
+      isScrollControlled: true, // Make the bottom sheet scrollable
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+      ),
+      builder: (context) {
+        return SingleChildScrollView( // Make the content scrollable
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard
+          ),
+          child: Container(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Circular Avatar at the top
+                Center(
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Color(0XFF800f2f).withOpacity(0.2),
+                    child: Text(
+                      user[FULLNAME].toString().isNotEmpty ? user[FULLNAME][0].toUpperCase() : '?',
+                      style: TextStyle(
+                        fontSize: 40,
+                        color: Color(0XFF800f2f),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text(
+                    "User Details",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0XFF800f2f)),
+                  ),
+                ),
+                Divider(
+                  color: Color(0XFF800f2f),
+                  thickness: 1.5,
+                ),
+                SizedBox(height: 10),
+                _buildDetailRow(Icons.person_outline, "Full Name", user[FULLNAME]),
+                SizedBox(height: 10),
+                _buildDetailRow(Icons.phone_android_outlined, "Phone Number", user[PHONE]),
+                SizedBox(height: 10),
+                _buildDetailRow(Icons.email_outlined, "Email", user[EMAIL]),
+                SizedBox(height: 10),
+                _buildDetailRow(Icons.cake_outlined, "Date of Birth", user[DOB]),
+                SizedBox(height: 10),
+                // Gender-specific icon
+                _buildDetailRow(
+                  user[GENDER].toString().toLowerCase() == 'male' ? Icons.male : Icons.female,
+                  "Gender",
+                  user[GENDER],
+                ),
+                SizedBox(height: 10),
+                _buildDetailRow(Icons.place_outlined, "City", user[CITY]),
+                SizedBox(height: 10),
+                _buildDetailRow(Icons.sports_esports_outlined, "Hobbies", user[HOBBIES]),
+                SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all(Color(0XFF800f2f)),
+                      padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      "Close",
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Helper widget to build a detail row with icon
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Color(0XFF800f2f), size: 28),
+        SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                color: Color(0XFF800f2f),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoration({labelText, prefixIcon}) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: TextStyle(color: Colors.black54),
+      prefixIcon: prefixIcon != null ?
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          padding: EdgeInsets.all(2),
+          decoration: BoxDecoration(
+              color:Color(0XFFffb3c1).withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8)
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Icon(prefixIcon, color: Color(0XFF590d22)),
+          ),
+        ),
+      ) : null,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Color(0XFF590d22), width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: EdgeInsets.symmetric(vertical: 18.0, horizontal: 20.0),
     );
   }
 }

@@ -32,7 +32,7 @@ class _HomePageBuilderState extends State<HomePageBuilder> {
               MaterialPageRoute(builder: (context) => RegistrationPage()),
             );
           },
-          icon: Icon(Icons.arrow_back_ios_new),
+          icon: Icon(Icons.arrow_back_ios_new,color: Colors.white70,),
         ),
         title: Text(
           'bondify',
@@ -42,7 +42,7 @@ class _HomePageBuilderState extends State<HomePageBuilder> {
             fontStyle: FontStyle.italic,
           ),
         ),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: Color(0XFFa4133c),
       ),
       body: PageView(
         controller: myPageController,
@@ -68,14 +68,14 @@ class _HomePageBuilderState extends State<HomePageBuilder> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
             child: GNav(
-              rippleColor: Colors.grey[300]!,
-              hoverColor: Colors.grey[100]!,
+              rippleColor: Color(0XFFfff0f3)!,
+              hoverColor: Color(0XFFffccd5)!,
               gap: 8,
-              activeColor: Colors.black,
+              activeColor: Color(0XFF800f2f),
               iconSize: 24,
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               duration: Duration(milliseconds: 400),
-              tabBackgroundColor: Colors.grey[100]!,
+              tabBackgroundColor: Color(0XFFfff0f3)!,
               color: Colors.black,
               tabs: [
                 GButton(
