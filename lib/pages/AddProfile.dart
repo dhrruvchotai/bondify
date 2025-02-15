@@ -270,6 +270,7 @@ class _AddProfileState extends State<AddProfile> {
                       },
                     ),
                   ),
+                  //religion field
                   // Religion Field
                   // Padding(
                   //   padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -483,7 +484,6 @@ class _AddProfileState extends State<AddProfile> {
                           user[EMAIL] = _email.text;
                           user[DOB] = _dobController.text;
                           user[GENDER] = _gender;
-                          user[RELIGION] = _religion.text;
                           user[CITY] = _city;
                           user[HOBBIES] = _hobbies.join(",");
                           myDatabase.addUserInUsersTable(user);

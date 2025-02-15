@@ -114,8 +114,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      _backgroundAnimation.value ?? Colors.brown[100]!,
-                      Colors.brown[200]!,
+                      _backgroundAnimation.value ?? Color(0XFFffb3c1),
+                      Color(0XFFffb3c1),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -178,7 +178,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                             child: Icon(
                               Icons.favorite,
-                              color: Colors.red,
+                              color: Color(0XFFa4133c),
                               size: logoSize * 0.5,
                             ),
                           ),
@@ -196,7 +196,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         fontStyle: FontStyle.italic,
                         fontSize: titleFontSize,
                         fontWeight: FontWeight.bold,
-                        color: Colors.pink[800],
+                        color: Color(0XFF590d22),
                       ),
                     ),
                   ),
@@ -205,7 +205,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   DefaultTextStyle(
                     style: TextStyle(
                       fontSize: taglineFontSize,
-                      color: Colors.redAccent[400],
+                      color: Color(0XFF800f2f),
                       fontStyle: FontStyle.italic,
                     ),
                     child: AnimatedTextKit(
@@ -234,7 +234,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               padding: EdgeInsets.symmetric(horizontal: 5),
                               child: Icon(
                                 Icons.star,
-                                color: Colors.yellow,
+                                color: Color(0XFFc9184a),
                                 size: starSize + (index * starSize * 0.1),
                               ),
                             ),
@@ -276,13 +276,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
+                          backgroundColor: Color(0XFFc9184a),
                           padding: EdgeInsets.symmetric(
                             horizontal: buttonPadding,
                             vertical: screenHeight * 0.02,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           elevation: 5,
                         ),

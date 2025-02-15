@@ -11,8 +11,8 @@ class AboutUsPage extends StatelessWidget {
       home: SafeArea(
         child: Scaffold(
           body: DeveloperScreen(
-            backgroundColor: Colors.brown[50],
-            colorValue:Colors.redAccent[200],
+            backgroundColor: Color(0XFFfff0f3),
+            colorValue:Color(0XFF800f2f),
             developerName: ' Dhruv Chotai (23010101051)',
             mentorName: ' Prof. Mehul Bhundiya',
             exploredByName: ' ASWDC',

@@ -1,5 +1,6 @@
 import 'package:bondify/pages/HomePageBuilder.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'AddProfile.dart';
 
 class RegistrationPage extends StatefulWidget {
@@ -10,10 +11,13 @@ class RegistrationPage extends StatefulWidget {
 class _RegistrationPageState extends State<RegistrationPage> {
   final _formKeyForLogin = GlobalKey<FormState>();
   final _formKeyForSignUp = GlobalKey<FormState>();
-  String? _name,_emailForLogin,_emailForSignUp;
-  String? _passwordForLogin,_passwordForSignUp;
-  String? _confirmPassword;
-  bool isObscuredTextActiveForPassword = true;
+  TextEditingController _emailForLogin = TextEditingController();
+  TextEditingController _passwordForLogin = TextEditingController();
+  TextEditingController _name = TextEditingController();
+  TextEditingController _emailForSignUp = TextEditingController();
+  TextEditingController _passwordForSignUp = TextEditingController();
+  TextEditingController _confirmPassword = TextEditingController();
+  bool isObscuredTextActiveForPassword = false;
   bool isObscuredTextActiveForConfirmPassword = false;
   bool isSignInOptionActive = true;
 
@@ -23,24 +27,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
     return Scaffold(
       body: isSignInOptionActive ? Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.brown[100]!,
-              Colors.brown[200]!,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: Color(0XFF800f2f).withOpacity(0.25),
         ),
         padding: EdgeInsets.all(16.0),
         child: Center(
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
+              color: Color(0XFFfff0f3),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.brown.withOpacity(0.5),
+                  color: Color(0XFF590d22).withOpacity(0.4),
                   spreadRadius: 5,
                   blurRadius: 15,
                   offset: Offset(0, 3),
@@ -60,19 +57,29 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.redAccent[400],
+                        color: Color(0XFF590d22),
                       ),
                     ),
                     SizedBox(height: 20),
                     // Email Field
                     TextFormField(
+                      controller: _emailForLogin,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.email_outlined),
+                        prefixIcon: Icon(Icons.email_outlined,color : Color(0XFF800f2f)),
                         labelText: 'Email',
+                        labelStyle: TextStyle(color: Color(0XFF590d22)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 2),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -85,26 +92,33 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         }
                         return null;
                       },
-                      onSaved: (value) {
-                        _emailForLogin = value;
-                      },
                     ),
                     SizedBox(height: 16),
                     // Password Field
                     TextFormField(
+                      controller: _passwordForLogin,
                       maxLength: 15,
                       obscureText: !isObscuredTextActiveForPassword, // This hides the password input
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock_outline_rounded),
+                        prefixIcon: Icon(Icons.lock_outline_rounded,color: Color(0XFF800f2f),),
                         suffixIcon: IconButton(onPressed: (){
                           setState(() {
                             isObscuredTextActiveForPassword = !isObscuredTextActiveForPassword;
                           });
-                        }, icon: isObscuredTextActiveForPassword ? Icon(Icons.visibility_outlined) : Icon(Icons.visibility_off_outlined)),
+                        }, icon: isObscuredTextActiveForPassword ? Icon(Icons.visibility_outlined,color:Color((0XFF800f2f)),) : Icon(Icons.visibility_off_outlined,color: Color(0XFF800f2f),)),
                         labelText: 'Password',
+                        labelStyle: TextStyle(color: Color(0XFF590d22)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 2),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -117,18 +131,15 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         }
                         return null;
                       },
-                      onSaved: (value) {
-                        _passwordForLogin = value; // Save the password
-                      },
                     ),
                     SizedBox(height: 16), // Space between fields
                     // Login Button
                     Center(
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async{
                           if (_formKeyForLogin.currentState!.validate()) {
                             _formKeyForLogin.currentState!.save();
-                            // FOR DB registration with _name, phoneNumber, _email, _age
+                            var prefs = await SharedPreferences.getInstance();
                             Navigator.push(context,MaterialPageRoute(
                                 builder:(context) => HomePageBuilder()));
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -137,10 +148,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent, // Background color
+                          backgroundColor: Color(0XFFc9184a),
                           padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           elevation: 5,
                           textStyle: TextStyle(fontSize: 18),
@@ -159,13 +170,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('New to bondiy? '),
+                        Text('New to bondiy? ',style: TextStyle(color: Color(0XFF590d22)),),
                         InkWell(onTap: (){
                           setState(() {
                             isSignInOptionActive = !isSignInOptionActive;
                           },);
                         },
-                        child:Text('Sign Up>',style: TextStyle(fontWeight:FontWeight.bold,color: Colors.redAccent,fontSize: 16,decoration: TextDecoration.underline,decorationColor: Colors.red,decorationThickness: 1,),),)
+                        child:Text('Sign Up>',style: TextStyle(fontWeight:FontWeight.bold,color: Color(0XFFc9184a),fontSize: 16,decoration: TextDecoration.underline,decorationColor: Colors.red,decorationThickness: 1,),),)
                       ],
                     )
                   ],
@@ -176,24 +187,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
         ),
       ) : Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.brown[50]!,
-              Colors.brown[100]!,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: Color(0XFF800f2f).withOpacity(0.25),
         ),
         padding: EdgeInsets.all(16.0),
         child: Center(
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
+              color: Color(0XFFfff0f3),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.brown.withOpacity(0.5),
+                  color: Color(0XFF590d22).withOpacity(0.4),
                   spreadRadius: 5,
                   blurRadius: 15,
                   offset: Offset(0, 3),
@@ -213,19 +217,29 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.redAccent[400],
+                        color: Color(0XFF590d22),
                       ),
                     ),
                     SizedBox(height: 20),
                     // Username Field
                     TextFormField(
+                      controller: _name,
                       maxLength: 40,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.person_2_outlined),
+                        prefixIcon: Icon(Icons.person_2_outlined,color : Color(0XFF800f2f)),
                         labelText: 'Username',
+                        labelStyle: TextStyle(color: Color(0XFF590d22)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 2),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -236,20 +250,27 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         }
                         return null;
                       },
-                      onSaved: (value) {
-                        _name = value;
-                      },
                     ),
                     SizedBox(height: 16),
                     // Email Field
                     TextFormField(
+                      controller: _emailForSignUp,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.email_outlined),
+                        prefixIcon: Icon(Icons.email_outlined,color : Color(0XFF800f2f)),
                         labelText: 'Email',
+                        labelStyle: TextStyle(color: Color(0XFF590d22)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 2),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -262,17 +283,15 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         }
                         return null;
                       },
-                      onSaved: (value) {
-                        _emailForSignUp = value;
-                      },
                     ),
                     SizedBox(height: 16),
                     // Password Field
                     TextFormField(
+                      controller: _passwordForSignUp,
                       maxLength: 15,
                       obscureText: !isObscuredTextActiveForPassword, // This hides the password input
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock_outline_rounded),
+                        prefixIcon: Icon(Icons.lock_outline_rounded,color : Color(0XFF800f2f)),
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
@@ -280,13 +299,22 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             });
                           },
                           icon: isObscuredTextActiveForPassword
-                              ? Icon(Icons.visibility_outlined)
-                              : Icon(Icons.visibility_off_outlined),
+                              ? Icon(Icons.visibility_outlined,color : Color(0XFF800f2f))
+                              : Icon(Icons.visibility_off_outlined,color : Color(0XFF800f2f)),
                         ),
                         labelText: 'Password',
+                        labelStyle: TextStyle(color: Color(0XFF590d22)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 2),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -299,21 +327,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         }
                         return null;
                       },
-                      onChanged: (value) {
-                        setState(() {
-                          _passwordForSignUp = value; // Update password on every change
-                        });
-                      },
-                      onSaved: (value) {
-                        _passwordForSignUp = value; // Save the password
-                      },
                     ),
                     // Confirm Password Field
                     TextFormField(
+                      controller: _confirmPassword,
                       maxLength: 15,
                       obscureText: !isObscuredTextActiveForConfirmPassword, // This hides the confirm password input
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.password_rounded),
+                        prefixIcon: Icon(Icons.password_rounded,color : Color(0XFF800f2f)),
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
@@ -322,26 +343,30 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             });
                           },
                           icon: isObscuredTextActiveForConfirmPassword
-                              ? Icon(Icons.visibility_outlined)
-                              : Icon(Icons.visibility_off_outlined),
+                              ? Icon(Icons.visibility_outlined,color : Color(0XFF800f2f))
+                              : Icon(Icons.visibility_off_outlined,color : Color(0XFF800f2f)),
                         ),
                         labelText: 'Confirm Password',
+                        labelStyle: TextStyle(color: Color(0XFF590d22)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.blue[300]!, width: 1.5),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Color(0XFF590d22), width: 2),
                         ),
                         filled: true,
                         fillColor: Colors.white,
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          _confirmPassword = value; // Update confirm password on every change
-                        });
-                      },
                       validator: (value) {
                         if (value!.isEmpty) {
                           return 'Please confirm your password';
-                        } else if (value != _passwordForSignUp) {
+                        } else if (value != _passwordForSignUp.text) {
                           return 'Passwords do not match';
                         }
                         return null;
@@ -363,10 +388,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent, // Background color
+                          backgroundColor: Color(0XFFc9184a),
                           padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           elevation: 5,
                           textStyle: TextStyle(fontSize: 18),
@@ -386,13 +411,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Already have an account? '),
+                        Text('Already have an account? ',style: TextStyle(color: Color(0XFF590d22)),),
                         InkWell(onTap: (){
                           setState(() {
                             isSignInOptionActive = !isSignInOptionActive;
                           },);
                         },
-                          child:Text('Login>',style: TextStyle(fontWeight:FontWeight.bold,color: Colors.redAccent,fontSize: 16,decoration: TextDecoration.underline,decorationColor: Colors.red,decorationThickness: 1,),),)
+                          child:Text('Login>',style: TextStyle(fontWeight:FontWeight.bold,color: Color(0XFFc9184a),fontSize: 16,decoration: TextDecoration.underline,decorationColor: Colors.red,decorationThickness: 1,),),)
                       ],
                     )
                   ],
