@@ -1,5 +1,6 @@
 import 'package:bondify/pages/String_Utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
 import 'String_Utils.dart';
@@ -94,6 +95,7 @@ class _AddProfileState extends State<AddProfile> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: TextFormField(
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-z,A-Z]'))],
                       textCapitalization: TextCapitalization.words,
                       controller: _fullName,
                       keyboardType: TextInputType.text,
@@ -113,6 +115,7 @@ class _AddProfileState extends State<AddProfile> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: TextFormField(
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))],
                       controller: _phoneNumber,
                       keyboardType: TextInputType.phone,
                       decoration: _inputDecoration(

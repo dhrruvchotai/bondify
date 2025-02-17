@@ -1,5 +1,6 @@
 import 'package:bondify/Database/DB.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:line_icons/line_icons.dart';
 import 'String_Utils.dart';
 import 'package:intl/intl.dart';
@@ -256,6 +257,7 @@ class _UserProfilesState extends State<UserProfiles> {
                                                                 Padding(
                                                                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                                                                   child: TextFormField(
+                                                                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-z,A-Z]'))],
                                                                     textCapitalization: TextCapitalization.words,
                                                                     controller: _fullName,
                                                                     keyboardType: TextInputType.text,
@@ -275,6 +277,7 @@ class _UserProfilesState extends State<UserProfiles> {
                                                                 Padding(
                                                                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                                                                   child: TextFormField(
+                                                                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))],
                                                                     controller: _phoneNumber,
                                                                     keyboardType: TextInputType.phone,
                                                                     decoration: _inputDecoration(

@@ -1,15 +1,19 @@
 import 'package:bondify/pages/AboutUs.dart';
 import 'package:bondify/pages/AddProfile.dart';
+import 'package:bondify/pages/Dashboard.dart';
 import 'package:bondify/pages/DisplayAllProfiles.dart';
 import 'package:bondify/pages/DisplayFavProfiles.dart';
+import 'package:bondify/pages/String_Utils.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'RegistrationPage.dart';
 
 class HomePageBuilder extends StatefulWidget {
-  const HomePageBuilder({super.key});
+  final int intialPageIndex;
+  const HomePageBuilder({super.key,required this.intialPageIndex});
 
   @override
   State<HomePageBuilder> createState() => _HomePageBuilderState();
@@ -22,24 +26,38 @@ class _HomePageBuilderState extends State<HomePageBuilder> {
   int currentIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.intialPageIndex;
+    myPageController = PageController(initialPage: currentIndex);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => RegistrationPage()),
-            );
-          },
-          icon: Icon(Icons.arrow_back_ios_new,color: Colors.white70,),
+        leading: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: IconButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => DashboardScreen()),
+              );
+            },
+            icon: Icon(Icons.arrow_back_ios_new,color: Colors.white70,),
+          ),
         ),
-        title: Text(
-          'bondify',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-            fontStyle: FontStyle.italic,
+        centerTitle: true,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Text(
+            'BONDIFY',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ),
         backgroundColor: Color(0XFFa4133c),
@@ -100,7 +118,7 @@ class _HomePageBuilderState extends State<HomePageBuilder> {
               onTabChange: (index) {
                 setState(() {
                   currentIndex = index;
-                  myPageController.animateToPage(currentIndex, duration: Duration(milliseconds: 500), curve: Easing.emphasizedAccelerate);
+                  myPageController.animateToPage(currentIndex, duration: Duration(milliseconds: 500), curve: Curves.easeInOut);
                 });
               },
             ),

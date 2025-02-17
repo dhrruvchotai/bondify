@@ -21,7 +21,7 @@ class DB {
       final dbPath = await getDatabasesPath();
       userDB = await openDatabase(
         path.join(dbPath, 'userDB.db'),
-        version: 4,
+        version: 5,
         onCreate: (db, version) async {
           print('Creating tables...');
 
@@ -34,7 +34,6 @@ class DB {
                 $EMAIL TEXT UNIQUE NOT NULL,
                 $DOB TEXT NOT NULL,
                 $GENDER TEXT CHECK($GENDER IN ('Male', 'Female', 'Other')) NOT NULL,
-                $RELIGION TEXT NOT NULL,
                 $CITY TEXT NOT NULL,
                 $HOBBIES TEXT,
                 $ISUSERFAV INTEGER DEFAULT 0

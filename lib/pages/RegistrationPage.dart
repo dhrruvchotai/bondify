@@ -1,4 +1,6 @@
+import 'package:bondify/pages/Dashboard.dart';
 import 'package:bondify/pages/HomePageBuilder.dart';
+import 'package:bondify/pages/String_Utils.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'AddProfile.dart';
@@ -51,6 +53,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    SizedBox(height: 20),
+                    Center(
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Color(0XFF800f2f).withOpacity(0.2),
+                        child: Icon(Icons.person_outline,size: 55,color: Colors.black,),
+                      ),
+                    ),
                     SizedBox(height: 20),
                     Text(
                       'Welcome back! Please Login',
@@ -139,9 +149,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         onPressed: () async{
                           if (_formKeyForLogin.currentState!.validate()) {
                             _formKeyForLogin.currentState!.save();
-                            var prefs = await SharedPreferences.getInstance();
-                            Navigator.push(context,MaterialPageRoute(
-                                builder:(context) => HomePageBuilder()));
+
+                            //If SuccessFully LoggedIn with the database
+                            var sharedPref = await SharedPreferences.getInstance();
+                            sharedPref.setBool(LOGINKEY,true);
+                            Navigator.pushReplacement(context,MaterialPageRoute(
+                                builder:(context) => DashboardScreen()));
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Logged into your account successfully!!')),
                             );
@@ -211,6 +224,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    SizedBox(height: 20),
+                    Center(
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Color(0XFF800f2f).withOpacity(0.2),
+                        child: Icon(Icons.person_outline,size: 55,color: Colors.black,),
+                      ),
+                    ),
                     SizedBox(height: 20),
                     Text(
                       'Create Your Account',
@@ -381,7 +402,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             _formKeyForSignUp.currentState!.save();
                             // Process the registration with _name, _phoneNumber, _email, _age
                             Navigator.push(context,MaterialPageRoute(
-                                builder:(context) => HomePageBuilder()));
+                                builder:(context) => HomePageBuilder(intialPageIndex: 1,)));
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Profile created successfully $_name...')),
                             );
