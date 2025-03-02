@@ -29,7 +29,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
     return Scaffold(
       body: isSignInOptionActive ? Container(
         decoration: BoxDecoration(
-          color: Color(0XFF800f2f).withOpacity(0.25),
+          color: Color(0XFF800f2f).withOpacity(0.4),
         ),
         padding: EdgeInsets.all(16.0),
         child: Center(
@@ -144,42 +144,65 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     ),
                     SizedBox(height: 16), // Space between fields
                     // Login Button
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () async{
-                          if (_formKeyForLogin.currentState!.validate()) {
-                            _formKeyForLogin.currentState!.save();
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Center(
+                        child: SizedBox(
+                          width: 300,
+                          child: ElevatedButton(
+                            onPressed: () async{
+                              if (_formKeyForLogin.currentState!.validate()) {
+                                _formKeyForLogin.currentState!.save();
 
-                            //If SuccessFully LoggedIn with the database
-                            var sharedPref = await SharedPreferences.getInstance();
-                            sharedPref.setBool(LOGINKEY,true);
-                            Navigator.pushReplacement(context,MaterialPageRoute(
-                                builder:(context) => DashboardScreen()));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Logged into your account successfully!!')),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0XFFc9184a),
-                          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 5,
-                          textStyle: TextStyle(fontSize: 18),
-                        ),
-                        child: Text(
-                          'Login',
-                          style: TextStyle(
-                            color: Colors.white,
+                                //If SuccessFully LoggedIn with the database
+                                var sharedPref = await SharedPreferences.getInstance();
+                                sharedPref.setBool(LOGINKEY,true);
+                                sharedPref.setString(LOGGEDINUSEREMAIL,_emailForLogin.text);
+                                Navigator.pushReplacement(context,MaterialPageRoute(
+                                    builder:(context) => DashboardScreen()));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Logged into your account successfully!!')),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0XFFc9184a),
+                              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 5,
+                              textStyle: TextStyle(fontSize: 18),
+                            ),
+                            child: Text(
+                              'Login',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    
+                    Center(
+                      child: Row(
+                        children: [
+                          Expanded(child: Divider(thickness: 2,)),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text("Other Sign-In methods"),
+                          ),
+                          Expanded(child: Divider(thickness: 2,)),
+                        ],
+                      ),
+                    ),
+                    Center(
+                      child: ElevatedButton(onPressed: (){},
+                        child: Image.asset("lib/assets/images/Google_Icon.jpg",height: 30,width: 30,),
+                        style:ElevatedButton.styleFrom(shape: CircleBorder(),padding: EdgeInsets.all(8),backgroundColor: Colors.white,overlayColor: Colors.white54),),
+                    ),
                     //Text toggle for login and signup
-                    SizedBox(height: 20,),
+                    SizedBox(height: 10,),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -200,7 +223,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         ),
       ) : Container(
         decoration: BoxDecoration(
-          color: Color(0XFF800f2f).withOpacity(0.25),
+          color: Color(0XFF800f2f).withOpacity(0.4),
         ),
         padding: EdgeInsets.all(16.0),
         child: Center(
@@ -395,38 +418,42 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     ),
 
                     // Register Button
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKeyForSignUp.currentState!.validate()) {
-                            _formKeyForSignUp.currentState!.save();
-                            // Process the registration with _name, _phoneNumber, _email, _age
-                            Navigator.push(context,MaterialPageRoute(
-                                builder:(context) => HomePageBuilder(intialPageIndex: 1,)));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Profile created successfully $_name...')),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0XFFc9184a),
-                          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 5,
-                          textStyle: TextStyle(fontSize: 18),
-                        ),
-                        child: Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            color: Colors.white,
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Center(
+                        child: SizedBox(
+                          width: 300,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (_formKeyForSignUp.currentState!.validate()) {
+                                _formKeyForSignUp.currentState!.save();
+                                // Process the registration with _name, _phoneNumber, _email, _age
+                                Navigator.push(context,MaterialPageRoute(
+                                    builder:(context) => HomePageBuilder(intialPageIndex: 1,)));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Profile created successfully $_name...')),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0XFFc9184a),
+                              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 5,
+                              textStyle: TextStyle(fontSize: 18),
+                            ),
+                            child: Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-
-
                     //Text toggle for login and signup
                     SizedBox(height: 20,),
                     Row(

@@ -5,12 +5,18 @@ import 'package:bondify/pages/HomePageBuilder.dart';
 import 'package:bondify/pages/RegistrationPage.dart';
 import 'package:flutter/material.dart';
 import 'Database/DB.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final db = DB();
   await db.initDatabase();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(MaterialApp(
     home:Splash_Screen(),

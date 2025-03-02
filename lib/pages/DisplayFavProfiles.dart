@@ -147,7 +147,7 @@ class _DisplayFavUserProfilesState extends State<DisplayFavUserProfiles> {
               bool isUserMale = user[GENDER] == "Male";
               return InkWell(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 8.0),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Color(0XFFc9184a).withOpacity(0.1),

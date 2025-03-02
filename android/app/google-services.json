@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "40912726168",
+    "project_id": "bondify-38864",
+    "storage_bucket": "bondify-38864.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:40912726168:android:ed89bb867b12725ea248ed",
+        "android_client_info": {
+          "package_name": "com.example.bondify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTl6Epvy27njNf9TjZLNil8DDyHiDjzVU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

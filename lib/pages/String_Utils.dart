@@ -8,6 +8,7 @@ const String RELIGION = 'Religion';
 const String CITY = 'City';
 const String HOBBIES = 'Hobbies';
 const String ISUSERFAV = "IsUserFav";
+const String LOGGEDINUSEREMAIL = "RegisteredUserEmail";
 
 //FOR AUTH TABLE
 const String USERNAME = 'username';
