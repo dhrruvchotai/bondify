@@ -1,1 +1,0 @@
-dart pub global run flutterfire_cli:flutterfire configure --project=bondify-38864

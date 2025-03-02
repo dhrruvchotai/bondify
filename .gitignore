@@ -44,3 +44,5 @@ app.*.map.json
 
 #Google_Login File
 lib/firebase_options.dart
+firebase.json
+android/app/google-services.json
