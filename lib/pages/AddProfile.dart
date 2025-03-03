@@ -1,10 +1,10 @@
-import 'package:bondify/pages/String_Utils.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
 import 'String_Utils.dart';
-import '../Database/DB.dart';
+import '../database/DB.dart';
 
 class AddProfile extends StatefulWidget {
   @override

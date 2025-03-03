@@ -1,4 +1,4 @@
-import 'package:bondify/Database/DB.dart';
+import 'package:bondify/database/DB.dart';
 import 'package:flutter/material.dart';
 import 'String_Utils.dart';
 

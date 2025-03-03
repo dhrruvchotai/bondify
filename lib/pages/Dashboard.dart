@@ -1,8 +1,8 @@
-import 'package:bondify/pages/HomePageBuilder.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'HomePageBuilder.dart';
 import 'RegistrationPage.dart';
 import 'String_Utils.dart';
 

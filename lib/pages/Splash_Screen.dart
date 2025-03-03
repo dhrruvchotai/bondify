@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:bondify/pages/AddProfile.dart';
 import 'package:bondify/pages/Dashboard.dart';
 import 'package:bondify/pages/HomePageBuilder.dart';

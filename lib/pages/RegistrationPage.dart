@@ -1,9 +1,10 @@
 import 'package:bondify/pages/Dashboard.dart';
 import 'package:bondify/pages/HomePageBuilder.dart';
 import 'package:bondify/pages/String_Utils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'AddProfile.dart';
+import '../auth/AuthService.dart';
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -22,6 +23,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   bool isObscuredTextActiveForPassword = false;
   bool isObscuredTextActiveForConfirmPassword = false;
   bool isSignInOptionActive = true;
+  AuthService _userAuth = AuthService();
 
 
   @override
@@ -197,7 +199,33 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       ),
                     ),
                     Center(
-                      child: ElevatedButton(onPressed: (){},
+                      child: ElevatedButton(onPressed: () async{
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => Center(child: CircularProgressIndicator(color: Color(0XFF590d22),)),
+                        );
+                        try{
+                          var userCred = await _userAuth.loginWithGoogle();
+                          if(userCred == null){
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('An error occurred while logging in with google!!',style: TextStyle(color: Colors.white),),backgroundColor: Colors.red,),
+                            );
+                          }
+                          else{
+                            var sharedPref = await SharedPreferences.getInstance();
+                            sharedPref.setBool(LOGINKEY,true);
+                            Navigator.pushReplacement(context,MaterialPageRoute(
+                                builder:(context) => DashboardScreen()));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Logged into your account successfully!!')),
+                            );
+                          }
+                        }
+                        catch(e){
+                          print("Error While Logging In with Google!");
+                        }
+                      },
                         child: Image.asset("lib/assets/images/Google_Icon.jpg",height: 30,width: 30,),
                         style:ElevatedButton.styleFrom(shape: CircleBorder(),padding: EdgeInsets.all(8),backgroundColor: Colors.white,overlayColor: Colors.white54),),
                     ),

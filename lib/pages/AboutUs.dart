@@ -58,10 +58,6 @@ class AboutUsPage extends StatelessWidget {
                 _buildContactRow(Icons.phone, "+91 9998177346"),
                 _buildContactRow(Icons.web, "www.darshan.ac.in"),
               ]),
-              SizedBox(height: 20),
-              SizedBox(height: 20),
-              Text("© 2025 Darshan University", style: TextStyle(color: Colors.grey)),
-              Text("Made with ❤ in India", style: TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -78,6 +74,7 @@ class AboutUsPage extends StatelessWidget {
 
   Widget _buildInfoCard(List<Widget> children) {
     return Card(
+      color: Color(0XFFfff0f3).withOpacity(0.8),
       borderOnForeground:true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),side: BorderSide(color: Color(0XFF590d22))),
       child: Padding(

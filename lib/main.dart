@@ -1,10 +1,6 @@
-import 'package:bondify/pages/AddProfile.dart';
-import 'package:bondify/pages/Dashboard.dart';
+import 'package:bondify/database/DB.dart';
 import 'package:bondify/pages/Splash_Screen.dart';
-import 'package:bondify/pages/HomePageBuilder.dart';
-import 'package:bondify/pages/RegistrationPage.dart';
 import 'package:flutter/material.dart';
-import 'Database/DB.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 

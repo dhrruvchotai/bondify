@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:bondify/auth/AuthService.dart';
 import 'package:bondify/pages/AboutUs.dart';
 import 'package:bondify/pages/AddProfile.dart';
 import 'package:bondify/pages/Dashboard.dart';
@@ -28,6 +28,7 @@ class _HomePageBuilderState extends State<HomePageBuilder> {
   var pagesList = [AddProfile(),UserProfiles(),DisplayFavUserProfiles(),AboutUsPage()];
   int currentIndex = 0;
   String? userInitialToDisplayInProfile;
+  AuthService _userAuth = AuthService();
 
   void _getUserInitial() async{
     var sharedpref = await SharedPreferences.getInstance();
@@ -226,12 +227,29 @@ class _HomePageBuilderState extends State<HomePageBuilder> {
             leading: Icon(Icons.logout, color: Color(0XFFa4133c)),
             title: Text('Logout'),
             onTap: () async {
-              var sharedPrf = await SharedPreferences.getInstance();
-              sharedPrf.setBool(LOGINKEY, false);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => RegistrationPage()),
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => Center(child: CircularProgressIndicator(color: Color(0XFF590d22),)),
               );
+              try{
+                _userAuth.logOutWithGoogle();
+                var sharedPrf = await SharedPreferences.getInstance();
+                sharedPrf.setBool(LOGINKEY, false);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Logged Out Successfully!!")),
+                );
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => RegistrationPage()),
+                );
+              }
+              catch(e){
+                print("An error occurred while logging out ${e.toString()}");
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("An error occurred while logging out!!")),
+                );
+              }
             },
           ),
         ],
@@ -269,10 +287,12 @@ class _HomePageBuilderState extends State<HomePageBuilder> {
               radius: 20,
               backgroundColor: Color(0XFFfff0f3),
               child: Center(
-                child: Text(userInitialToDisplayInProfile != null && userInitialToDisplayInProfile!.isNotEmpty
-                    ? userInitialToDisplayInProfile![0].toUpperCase()
-                    : '?',
-                  style: TextStyle(color:Color(0XFF800f2f),fontSize: 22),),
+                child: userInitialToDisplayInProfile != null && userInitialToDisplayInProfile!.isNotEmpty
+                    ? Text(
+                  userInitialToDisplayInProfile![0].toUpperCase(),
+                  style: TextStyle(color: Color(0XFF800f2f), fontSize: 22),
+                )
+                    : CircularProgressIndicator(color: Color(0XFF590d22),strokeWidth: 2,strokeAlign:BorderSide.strokeAlignInside,), // Show loader if initials are not available
               ),
             ),
           )
