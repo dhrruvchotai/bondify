@@ -1,3 +1,4 @@
+import 'package:bondify/API/APIService.dart';
 import 'package:bondify/database/DB.dart';
 import 'package:flutter/material.dart';
 import 'String_Utils.dart';
@@ -10,7 +11,12 @@ class DisplayFavUserProfiles extends StatefulWidget {
 }
 
 class _DisplayFavUserProfilesState extends State<DisplayFavUserProfiles> {
-  DB myDatabase = DB();
+  //region LocalDB
+  //For LocalDatabase
+  // DB myDatabase = DB();
+  //endregion
+  APIService myAPIService = APIService();
+  List<Map<String, dynamic>> currentUsersList = [];
   List<Map<String, dynamic>> favUsers = [];
   List<Map<String, dynamic>> filteredFavUsers = [];
   TextEditingController searchController = TextEditingController();
@@ -23,15 +29,30 @@ class _DisplayFavUserProfilesState extends State<DisplayFavUserProfiles> {
   }
 
   Future<void> loadFavUsers() async {
-    await myDatabase.fetchUsersFromUsersTable();
-    fetchFavUsers();
+    //region LocalDB
+    //with LocalDataBase
+    // await myDatabase.fetchUsersFromUsersTable();
+    // fetchFavUsers();
+    //endregion
+    final dataList = await myAPIService.fetchUsers();
+    currentUsersList = dataList;
+    print("::: CurrenUserList From Fav Page $currentUsersList");
+    fetchFavUsersWithAPI();
   }
 
-  Future<void> fetchFavUsers() async {
-    setState(() {
-      favUsers = myDatabase.usersList.where((user) => user[ISUSERFAV] == 1).toList();
-      filteredFavUsers = List.from(favUsers); // Initialize filtered list with all favorite users
-    });
+  //region LocalDB
+  // Future<void> fetchFavUsers() async {
+  //   setState(() {
+  //     favUsers = myDatabase.usersList.where((user) => user[ISUSERFAV] == 1).toList();
+  //     filteredFavUsers = List.from(favUsers); // Initialize filtered list with all favorite users
+  //   });
+  // }
+  //endregion
+
+  Future<void> fetchFavUsersWithAPI() async {
+      favUsers = currentUsersList.where((user) => user[ISUSERFAV] == true).toList();
+      print(":::Fav Users $favUsers");
+      filteredFavUsers = List.from(favUsers);
   }
 
   void searchUser(String query) {
@@ -127,102 +148,123 @@ class _DisplayFavUserProfilesState extends State<DisplayFavUserProfiles> {
             ),
           ),
         )),
-        Expanded(
-          child: filteredFavUsers.isEmpty
-              ? Center(
-            child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                Icon(Icons.favorite_border, size: 100, color: Color(0XFF590d22).withOpacity(0.4)),
-            Text(
-              'No favorite profiles available.',
-              style: TextStyle(fontSize: 18, color: Color(0XFF590d22).withOpacity(0.4)),
-            )],
-            ),
-          )
-              : ListView.builder(
-            itemCount: filteredFavUsers.length,
-            itemBuilder: (context, index) {
-              var user = filteredFavUsers[index];
-              bool isUserMale = user[GENDER] == "Male";
-              return InkWell(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 8.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Color(0XFFc9184a).withOpacity(0.1),
-                      border: Border.all(color: Colors.black38),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
-                          spreadRadius: 1,
-                          blurRadius: 2,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    margin: EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        _buildUserAvatar(user[FULLNAME]),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user[FULLNAME],
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Icon(
-                                    isUserMale ? Icons.male : Icons.female,
-                                    size: 18,
-                                    color: Color(0XFF800f2f),
-                                  ),
-                                  SizedBox(width: 5),
-                                  Text(
-                                    user[GENDER],
-                                    style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              visualDensity: VisualDensity.compact,
-                              onPressed: () async {
-                                int userId = user['id'];
-                                int newFavStatus = (user[ISUSERFAV] == 1) ? 0 : 1;
-                                await myDatabase.makeUserFav(userId, newFavStatus);
-                                await fetchFavUsers();
-                              },
-                              icon: (user[ISUSERFAV] == 1)
-                                  ? Icon(Icons.favorite, color: Colors.redAccent, size: 26)
-                                  : Icon(Icons.favorite_outline_rounded, color: Colors.brown[700], size: 28),
+      FutureBuilder(future: loadFavUsers(), builder: (context, snapshot) {
+        if(snapshot.connectionState == ConnectionState.waiting){
+          return Expanded(child: Center(child: CircularProgressIndicator(color: Color(0XFF590d22),)));
+        }
+        else{
+          return Expanded(
+              child: filteredFavUsers.isEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.favorite_border, size: 100, color: Color(0XFF590d22).withOpacity(0.4)),
+                    Text(
+                      'No favorite profiles available.',
+                      style: TextStyle(fontSize: 18, color: Color(0XFF590d22).withOpacity(0.4)),
+                    )],
+                ),
+              )
+                  : ListView.builder(
+                itemCount: filteredFavUsers.length,
+                itemBuilder: (context, index) {
+                  var user = filteredFavUsers[index];
+                  bool isUserMale = user[GENDER] == "Male";
+                  return InkWell(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 8.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Color(0XFFc9184a).withOpacity(0.1),
+                          border: Border.all(color: Colors.black38),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.2),
+                              spreadRadius: 1,
+                              blurRadius: 2,
+                              offset: Offset(0, 1),
                             ),
                           ],
                         ),
-                      ],
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        margin: EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            _buildUserAvatar(user[FULLNAME]),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user[FULLNAME],
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        isUserMale ? Icons.male : Icons.female,
+                                        size: 18,
+                                        color: Color(0XFF800f2f),
+                                      ),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        user[GENDER],
+                                        style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () async {
+                                    //region LocalDB
+                                    // int userId = user['id'];
+                                    // int newFavStatus = (user[ISUSERFAV] == 1) ? 0 : 1;
+                                    // await myDatabase.makeUserFav(userId, newFavStatus);
+                                    // await fetchFavUsers();
+                                    //endregion
+                                    String userId = user['id'];
+                                    bool newFavStatus = (user[ISUSERFAV] == true) ? false : true;
+                                    showDialog(context: context, builder: (context) {
+                                      return Center(child: Expanded(child: CircularProgressIndicator(color: Color(0XFF590d22),)));
+                                    },);
+                                    await myAPIService.editUser(userId, {ISUSERFAV : newFavStatus});
+                                    await loadFavUsers();
+                                    Navigator.of(context).pop();
+                                    setState(() {
+
+                                    });
+                                  },
+                                  icon: (user[ISUSERFAV] == true)
+                                      ? Icon(Icons.favorite, color: Colors.redAccent, size: 26)
+                                      : Icon(Icons.favorite_outline_rounded, color: Colors.brown[700], size: 28),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                onTap: () {
-                  _showFullDetailsBottomSheet(context, user);
+                    onTap: () {
+                      _showFullDetailsBottomSheet(context, user);
+                    },
+                  );
                 },
-              );
-            },
-          )
-        ),
+              )
+          );
+        }
+
+      },)
       ],
       ),
     ),

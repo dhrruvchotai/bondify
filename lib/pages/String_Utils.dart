@@ -4,7 +4,6 @@ const String PHONE = 'PhoneNumber';
 const String EMAIL = 'Email';
 const String DOB = 'DateOfBirth';
 const String GENDER = 'Gender';
-const String RELIGION = 'Religion';
 const String CITY = 'City';
 const String HOBBIES = 'Hobbies';
 const String ISUSERFAV = "IsUserFav";

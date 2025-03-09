@@ -1,4 +1,6 @@
+import 'package:bondify/API/APIService.dart';
 import 'package:bondify/database/DB.dart';
+import 'package:bondify/utils/Utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'String_Utils.dart';
@@ -12,6 +14,7 @@ class UserProfiles extends StatefulWidget {
 
 class _UserProfilesState extends State<UserProfiles> {
   DB myDatabase = DB();
+  APIService myAPIService = APIService();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   List<Map<String, dynamic>> currentUsersList = [];
   List<Map<String, dynamic>> searchUsersList = [];
@@ -38,19 +41,60 @@ class _UserProfilesState extends State<UserProfiles> {
   @override
   void initState() {
     super.initState();
-    fetchUsers();
+    //For Local Database
+    //region Local DB
+    //To Fetch the users from the local DB
+    // fetchUsers();
+    //endregion
+    handleInernetConnection();
   }
 
+  void handleInernetConnection() async{
+    bool internetResult = await Utility().isInternetAvailable();
+    if(!internetResult){
+      return showDialog(context: context, builder: (context) {
+        return AlertDialog(
+          title:Text("No Internet Connection!!",style: TextStyle(fontSize: 20,color: Color(0XFF590d22)),),
+          icon: Icon(Icons.signal_wifi_connected_no_internet_4,color: Color(0XFF590d22),),
+          actions: [
+            TextButton(onPressed: (){
+              Navigator.of(context).pop();
+            }, child: Text("Close",style: TextStyle(color: Color(0XFF800f2f)),))
+          ],
+        );
+      },);
+    }
+    else{
+      fetchUsersWithAPI();
+    }
+  }
+  //Fetch From LocalDB
   Future<void> fetchUsers() async {
     await myDatabase.fetchUsersFromUsersTable();
     currentUsersList = myDatabase.usersList; // Initially, display all users
     setState(() {});
   }
 
+  //Fetch From API
+  Future<void> fetchUsersWithAPI() async {
+    final dataList = await myAPIService.fetchUsers();
+    setState((){
+      currentUsersList = dataList;
+    });
+    print(currentUsersList);
+  }
+
+
+
   void searchUser(String searchData) {
     searchUsersList.clear(); // Clear previous search results
     if (searchData.isEmpty) {
+      //For Local DB
+      //region LocalDB
       currentUsersList = myDatabase.usersList; // If search is empty, show all users
+      //endregion
+      //For API
+      currentUsersList = currentUsersList;
     } else {
       for (var element in myDatabase.usersList) {
         if (
@@ -186,7 +230,15 @@ class _UserProfilesState extends State<UserProfiles> {
                               SearchController.clear();
                               searchUsersList.clear();
                               searchValue = "";
-                              currentUsersList = List.from(myDatabase.usersList);
+                              //region LocalDB
+                              //For Local DB
+                              // currentUsersList = List.from(myDatabase.usersList);
+                              //endregion
+
+                              //For API
+
+                              //For API
+                              currentUsersList = List.from(currentUsersList);
                               setState(() {});
                             }, icon: Icon(Icons.cancel_outlined,color: Color(0XFF590d22),)),
                             enabledBorder: OutlineInputBorder(
@@ -252,747 +304,786 @@ class _UserProfilesState extends State<UserProfiles> {
                   ),
                 ],
               ),
-              Expanded(
-                child: currentUsersList.isEmpty
-                    ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Center(child: Icon(Icons.search_off_outlined, size: 100, color: Color(0XFF590d22).withOpacity(0.4))),
-                      Center(
-                        child: Text(
-                          'No profiles available.',
-                          style: TextStyle(fontSize: 18, color: Color(0XFF590d22).withOpacity(0.4)),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-                    : ListView.builder(
-                  itemCount: currentUsersList.length,
-                  itemBuilder: (context, index) {
-                    var user = currentUsersList[index];
-                    //Display Age
-                    String dob = user[DOB];
-                    int userBDateYear;
-
-                    try {
-                      if (dob.isNotEmpty) {
-                        DateTime parsedDate = DateFormat("dd-MM-yyyy").parse(dob); // Correct format
-                        userBDateYear = parsedDate.year;
-                        userAge = currentYear - userBDateYear;
-                      } else {
-                        userAge = 0; // Handle empty DOB
-                      }
-                    } catch (e) {
-                      userAge = 0; // Handle parsing errors
-                      print("Error parsing DOB: $dob. Exception: $e");
-                    }
-                    return InkWell(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 8.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Color(0XFFfff0f3),
-                            border:Border.all(color: Colors.black38),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.2),
-                                spreadRadius: 1,
-                                blurRadius: 2,
-                                offset: Offset(0, 1),
-                              ),
-                            ],
+              FutureBuilder(future:myAPIService.fetchUsers(), builder: (context, snapshot) {
+                if(snapshot.hasData && snapshot.data != null){
+                  return Expanded(
+                    child: currentUsersList.isEmpty
+                        ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Center(child: Icon(Icons.search_off_outlined, size: 100, color: Color(0XFF590d22).withOpacity(0.4))),
+                          Center(
+                            child: Text(
+                              'No profiles available.',
+                              style: TextStyle(fontSize: 18, color: Color(0XFF590d22).withOpacity(0.4)),
+                            ),
                           ),
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          margin: EdgeInsets.symmetric(vertical: 6),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    Row(
+                        ],
+                      ),
+                    )
+                        : ListView.builder(
+                      itemCount: currentUsersList.length,
+                      itemBuilder: (context, index) {
+                        var user = currentUsersList[index];
+                        //Display Age
+                        String dob = user[DOB];
+                        int userBDateYear;
+
+                        try {
+                          if (dob.isNotEmpty) {
+                            DateTime parsedDate = DateFormat("dd-MM-yyyy").parse(dob); // Correct format
+                            userBDateYear = parsedDate.year;
+                            userAge = currentYear - userBDateYear;
+                          } else {
+                            userAge = 0; // Handle empty DOB
+                          }
+                        } catch (e) {
+                          userAge = 0; // Handle parsing errors
+                          print("Error parsing DOB: $dob. Exception: $e");
+                        }
+                        return InkWell(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 17.0, vertical: 8.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Color(0XFFfff0f3),
+                                border:Border.all(color: Colors.black38),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 1,
+                                    blurRadius: 2,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              margin: EdgeInsets.symmetric(vertical: 6),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
                                       children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(right:18),
-                                          child: _buildUserAvatar(user[FULLNAME]),
-                                        ),
-                                        SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                user[FULLNAME],
-                                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                                                overflow: TextOverflow.ellipsis,
+                                        Row(
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(right:18),
+                                              child: _buildUserAvatar(user[FULLNAME]),
+                                            ),
+                                            SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                children: [
+                                                  Text(
+                                                    user[FULLNAME],
+                                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(left: 2,top: 3),
+                                                    child: Row(
+                                                      children: [
+                                                        //Display Age
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(bottom: 3,right:1),
+                                                          child: Icon(
+                                                            Icons.cake_sharp,                                            size: 18,
+                                                            color: Color(0XFF800f2f),
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 5),
+                                                        Text(
+                                                          userAge.toString(),
+                                                          style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
+                                                        ),
+                                                        Text(" | ",style: TextStyle(color: Colors.black,fontSize: 20),),
+                                                        Icon(
+                                                          isUserMale ? Icons.male : Icons.female,
+                                                          size: 18,
+                                                          color: Color(0XFF800f2f),
+                                                        ),
+                                                        SizedBox(width: 5),
+                                                        Expanded(
+                                                          child: Text(
+                                                            user[GENDER],
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
+                                                          ),
+                                                        ),
+                                                        Text(" | ",style: TextStyle(color: Colors.black,fontSize: 20),),
+                                                        Icon(
+                                                          Icons.location_city,                                            size: 18,
+                                                          color: Color(0XFF800f2f),
+                                                        ),
+                                                        SizedBox(width: 5),
+                                                        Expanded(
+                                                          child: Text(
+                                                            user[CITY],
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(left: 2,top: 3),
-                                                child: Row(
-                                                  children: [
-                                                    //Display Age
-                                                    Padding(
-                                                      padding: const EdgeInsets.only(bottom: 3,right:1),
-                                                      child: Icon(
-                                                        Icons.cake_sharp,                                            size: 18,
-                                                        color: Color(0XFF800f2f),
+                                            ),
+                                          ],
+                                        ),
+                                        Divider(thickness: 1,height: 18,color: Colors.black38,),
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 5,top: 2),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              InkWell(
+                                                onTap: () {
+                                                  _fullName.text = user[FULLNAME];
+                                                  _phoneNumber.text = user[PHONE];
+                                                  _email.text = user[EMAIL];
+                                                  _dobController.text = user[DOB];
+                                                  _gender = user[GENDER];
+                                                  _city = user[CITY];
+                                                  _pickedYear = DateFormat('dd-MM-yyyy').parse(user[DOB]).year;
+                                                  _hobbies = (user[HOBBIES] as String).split(",").toList();
+
+                                                  print("picked year from edit : $_pickedYear");
+
+                                                  if (user[DOB] != null && user[DOB].isNotEmpty) {
+                                                    DateTime dob = DateFormat('dd-MM-yyyy').parse(user[DOB]);
+                                                    _pickedYear = dob.year;
+                                                  } else {
+                                                    _pickedYear = null; // Handle null or empty DOB
+                                                  }
+
+                                                  showModalBottomSheet(context: context,isScrollControlled: true,
+                                                    builder: (context) {
+                                                      return StatefulBuilder(
+                                                          builder: (BuildContext context, StateSetter setState) {
+                                                            return DraggableScrollableSheet(
+                                                              initialChildSize: 1, // Full height
+                                                              minChildSize: 0.5, // Minimum height when dragged down
+                                                              maxChildSize: 1, // Maximum height
+                                                              builder: (_, controller) {
+                                                                return SafeArea(
+                                                                  child: Padding(
+                                                                    padding: const EdgeInsets.all(12.0),
+                                                                    child: Container(
+                                                                      height: 400,
+                                                                      child: SingleChildScrollView(
+                                                                        scrollDirection: Axis.vertical,
+                                                                        child: Form(
+                                                                          key:_formKey,
+                                                                          child: Column(
+                                                                            children: [
+                                                                              //Cancel Button
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.only(top: 15),
+                                                                                child: IconButton(onPressed: (){
+                                                                                  Navigator.of(context).pop();
+                                                                                }, icon: Icon(Icons.cancel_outlined),iconSize: 35,),
+                                                                              ),
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.only(top: 20),
+                                                                                child: Row(
+                                                                                  children: [Icon(Icons.person_outline_rounded,size: 30,color: Color(0XFF800f2f),),
+                                                                                    SizedBox(width: 10,),
+                                                                                    Text('Person Details',style: TextStyle(fontSize: 20),)],
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 10,),
+                                                                              // Full Name Field
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                                                child: TextFormField(
+                                                                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-z,A-Z]'))],
+                                                                                  textCapitalization: TextCapitalization.words,
+                                                                                  controller: _fullName,
+                                                                                  keyboardType: TextInputType.text,
+                                                                                  decoration: _inputDecoration(
+                                                                                    labelText: 'Full Name',
+                                                                                    prefixIcon: Icons.person_2_outlined,
+                                                                                  ),
+                                                                                  validator: (value) {
+                                                                                    if (value!.isEmpty) {
+                                                                                      return 'Please enter your full name';
+                                                                                    }
+                                                                                    return null;
+                                                                                  },
+                                                                                ),
+                                                                              ),
+                                                                              // Phone Number Field
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                                                child: TextFormField(
+                                                                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))],
+                                                                                  controller: _phoneNumber,
+                                                                                  keyboardType: TextInputType.phone,
+                                                                                  decoration: _inputDecoration(
+                                                                                    labelText: 'Phone Number',
+                                                                                    prefixIcon: Icons.phone_outlined,
+                                                                                  ),
+                                                                                  validator: (value) {
+                                                                                    if (value!.isEmpty) {
+                                                                                      return 'Please enter your phone number';
+                                                                                    } else if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                                                                                      return 'Please enter a valid 10-digit phone number';
+                                                                                    }
+                                                                                    return null;
+                                                                                  },
+                                                                                ),
+                                                                              ),
+                                                                              // Email Field
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                                                child: TextFormField(
+                                                                                  controller: _email,
+                                                                                  keyboardType: TextInputType.emailAddress,
+                                                                                  decoration: _inputDecoration(
+                                                                                    labelText: 'Email Address',
+                                                                                    prefixIcon: Icons.email_outlined,
+                                                                                  ),
+                                                                                  validator: (value) {
+                                                                                    if (value!.isEmpty) {
+                                                                                      return 'Please enter your email';
+                                                                                    } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                                                                                      return 'Please enter a valid email';
+                                                                                    }
+                                                                                    return null;
+                                                                                  },
+                                                                                ),
+                                                                              ),
+                                                                              // Date of Birth Field
+                                                                              SizedBox(height: 20,),
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.all(2.0),
+                                                                                child: Row(
+                                                                                  children: [Icon(Icons.cake_outlined,size: 30,color: Color(0XFF800f2f),),
+                                                                                    SizedBox(width: 10,),
+                                                                                    Text('Birth Date',style: TextStyle(fontSize: 20),)],
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 10,),
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                                                child: TextFormField(
+                                                                                  readOnly: true,
+                                                                                  controller: _dobController,
+                                                                                  decoration: _inputDecoration(
+                                                                                    labelText: 'Date of Birth',
+                                                                                    prefixIcon: Icons.calendar_today_outlined,
+                                                                                  ),
+                                                                                  onTap: () async {
+                                                                                    DateTime? pickedDate = await showDatePicker(
+                                                                                      context: context,
+                                                                                      initialDate: DateTime.now(),
+                                                                                      firstDate: DateTime(1900),
+                                                                                      lastDate: DateTime.now(),
+                                                                                    );
+                                                                                    if (pickedDate != null) {
+                                                                                      setState(() {
+                                                                                        _pickedYear = pickedDate.year;
+                                                                                        print('Picked year from edit : ${_pickedYear}');
+                                                                                        _dobController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
+                                                                                      });
+                                                                                    }
+                                                                                  },
+                                                                                  validator: (value) {
+                                                                                    if (value!.isEmpty) {
+                                                                                      return 'Please select your date of birth';
+                                                                                    }
+                                                                                    if ((DateTime.now().year - _pickedYear!) < 18) {
+                                                                                      return 'Age must be above 18 years!!';
+                                                                                    }
+                                                                                    return null;
+                                                                                  },
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 20,),
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.all(2.0),
+                                                                                child: Row(
+                                                                                  children: [
+                                                                                    Icon(Icons.wc_outlined, size: 30, color: Color(0XFF800f2f)),
+                                                                                    SizedBox(width: 10),
+                                                                                    Text('Gender', style: TextStyle(fontSize: 20)),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 10),
+                                                                              // Gender Field
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                                                child: FormField<String>(
+                                                                                  builder: (FormFieldState<String> state) {
+                                                                                    return InputDecorator(
+                                                                                      decoration: _inputDecoration(
+                                                                                        labelText: 'Gender',
+                                                                                        prefixIcon: Icons.wc_outlined,
+                                                                                      ).copyWith(errorText: state.errorText),
+                                                                                      child: Wrap(
+                                                                                        spacing: 16,
+                                                                                        runSpacing: 8,
+                                                                                        children: [
+                                                                                          Row(
+                                                                                            mainAxisSize: MainAxisSize.min,
+                                                                                            children: [
+                                                                                              Radio<String>(
+                                                                                                value: 'Male',
+                                                                                                groupValue: _gender,
+                                                                                                onChanged: (value) {
+                                                                                                  setState(() {
+                                                                                                    _gender = value; // Update the gender value
+                                                                                                    state.didChange(value); // Notify the FormField of the change
+                                                                                                  });
+                                                                                                },
+                                                                                                activeColor: Color(0XFFa4133c),
+                                                                                              ),
+                                                                                              Text(
+                                                                                                'Male',
+                                                                                                style: TextStyle(fontSize: 16, color: Colors.black87),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                          Row(
+                                                                                            mainAxisSize: MainAxisSize.min,
+                                                                                            children: [
+                                                                                              Radio<String>(
+                                                                                                value: 'Female',
+                                                                                                groupValue: _gender,
+                                                                                                onChanged: (value) {
+                                                                                                  setState(() {
+                                                                                                    _gender = value; // Update the gender value
+                                                                                                    state.didChange(value); // Notify the FormField of the change
+                                                                                                  });
+                                                                                                },
+                                                                                                activeColor: Color(0XFFa4133c),
+                                                                                              ),
+                                                                                              Text(
+                                                                                                'Female',
+                                                                                                style: TextStyle(fontSize: 16, color: Colors.black87),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                        ],
+                                                                                      ),
+                                                                                    );
+                                                                                  },
+                                                                                  validator: (value) {
+                                                                                    if (_gender == null) {
+                                                                                      return 'Please select your gender'; // Validation message
+                                                                                    }
+                                                                                    return null;
+                                                                                  },
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 10,),
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.all(2.0),
+                                                                                child: Row(
+                                                                                  children: [Icon(Icons.location_city_outlined,size: 30,color: Color(0XFF800f2f),),
+                                                                                    SizedBox(width: 10,),
+                                                                                    Text('City',style: TextStyle(fontSize: 20),)],
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 10,),
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                                                child: DropdownButtonFormField<String>(
+                                                                                  value: _city,
+                                                                                  decoration: _inputDecoration(
+                                                                                    labelText: 'City',
+                                                                                  ),
+                                                                                  icon: Icon(Icons.arrow_drop_down),
+                                                                                  //city option array
+                                                                                  items: [
+                                                                                    "Ahmedabad",
+                                                                                    "Surat",
+                                                                                    "Vadodara",
+                                                                                    "Rajkot",
+                                                                                    "Bhavnagar",
+                                                                                    "Jamnagar",
+                                                                                    "Junagadh",
+                                                                                    "Gandhinagar",
+                                                                                    "Anand",
+                                                                                    "Morbi",
+                                                                                    "Nadiad",
+                                                                                    "Mehsana",
+                                                                                    "Bharuch",
+                                                                                    "Navsari",
+                                                                                    "Porbandar",
+                                                                                    "Vapi",
+                                                                                    "Valsad",
+                                                                                    "Palanpur",
+                                                                                    "Gondal",
+                                                                                    "Godhra",
+                                                                                    "Veraval",
+                                                                                    "Patan",
+                                                                                    "Kalol",
+                                                                                    "Dahod",
+                                                                                    "Botad",
+                                                                                    "Amreli",
+                                                                                    "Surendranagar",
+                                                                                    "Himatnagar",
+                                                                                    "Modasa",
+                                                                                    "Mahesana",
+                                                                                    "Dwarka",
+                                                                                    "Mandvi",
+                                                                                    "Ankleshwar",
+                                                                                    "Deesa",
+                                                                                    "Bhuj",
+                                                                                    "Kadi",
+                                                                                    "Visnagar",
+                                                                                    "Dholka",
+                                                                                    "Sanand",
+                                                                                    "Wadhwan",
+                                                                                    "Unjha",
+                                                                                    "Halol",
+                                                                                    "Chhota Udaipur",
+                                                                                    "Lunawada",
+                                                                                    "Savarkundla",
+                                                                                    "Mahuva",
+                                                                                    "Manavadar",
+                                                                                    "Viramgam",
+                                                                                    "Bodeli",
+                                                                                    "Jetpur",
+                                                                                    "Dhoraji",
+                                                                                    "Jasdan",
+                                                                                    "Khambhat",
+                                                                                    "Keshod",
+                                                                                    "Talaja",
+                                                                                    "Mangrol",
+                                                                                    "Bagasara",
+                                                                                    "Umreth",
+                                                                                    "Sihor",
+                                                                                    "Petlad",
+                                                                                    "Gadhada",
+                                                                                    "Bhanvad",
+                                                                                    "Vijapur",
+                                                                                    "Radhanpur",
+                                                                                    "Kutch",
+                                                                                    "Kapadvanj",
+                                                                                    "Tharad",
+                                                                                    "Bayad",
+                                                                                    "Idar",
+                                                                                    "Mansa",
+                                                                                    "Dabhoi",
+                                                                                    "Karjan",
+                                                                                    "Songadh",
+                                                                                    "Bilkha",
+                                                                                    "Okha",
+                                                                                    "Jhalod",
+                                                                                    "Mangrol (Junagadh)"
+                                                                                  ]
+                                                                                      .map(
+                                                                                        (city) => DropdownMenuItem<String>(
+                                                                                      value: city,
+                                                                                      child: Text(
+                                                                                        city,
+                                                                                        style: TextStyle(color: Colors.black87),
+                                                                                      ),
+                                                                                    ),
+                                                                                  )
+                                                                                      .toList(),
+                                                                                  onChanged: (value) {
+                                                                                    _city = value;
+                                                                                  },
+                                                                                  validator: (value) {
+                                                                                    if (value == null || value.isEmpty) {
+                                                                                      return 'Please select your city';
+                                                                                    }
+                                                                                    return null;
+                                                                                  },
+                                                                                ),
+                                                                              ),
+                                                                              // Hobbies Field
+                                                                              SizedBox(height: 20,),
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.all(2.0),
+                                                                                child: Row(
+                                                                                  children: [Icon(Icons.interests,size: 30,color: Color(0XFF800f2f),),
+                                                                                    SizedBox(width: 10,),
+                                                                                    Text('Hobbies',style: TextStyle(fontSize: 20),)],
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 12,),
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                                                child: FormField(
+                                                                                  builder: (FormFieldState state) {
+                                                                                    return InputDecorator(
+                                                                                      decoration: _inputDecoration(
+                                                                                        labelText: 'Hobbies',
+                                                                                      ).copyWith(errorText: state.errorText),
+                                                                                      child: Wrap(
+                                                                                        spacing: 28, // Horizontal spacing between buttons
+                                                                                        runSpacing: 8, // Vertical spacing between buttons
+                                                                                        children: _hobbiesOptions.map((hobby) {
+                                                                                          return ElevatedButton(
+                                                                                            onPressed: () {
+                                                                                              setState(() {
+                                                                                                if (_hobbies.contains(hobby)) {
+                                                                                                  _hobbies.remove(hobby);
+                                                                                                  print(_hobbies);// Deselect if already selected
+                                                                                                } else {
+                                                                                                  _hobbies.add(hobby);
+                                                                                                  print(_hobbies);// Select if not already selected
+                                                                                                }
+                                                                                              });
+                                                                                              setState(() {
+                                                                                                print('Hobbies updated!!');
+                                                                                              });
+                                                                                            },
+                                                                                            style: ElevatedButton.styleFrom(
+                                                                                              backgroundColor: _hobbies.contains(hobby)
+                                                                                                  ? Color(0XFFc9184a).withOpacity(0.7) // Selected state
+                                                                                                  : Color(0XFF800f2f).withOpacity(0.2), // Unselected state
+                                                                                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                                                                              shape: RoundedRectangleBorder(
+                                                                                                borderRadius: BorderRadius.circular(20),
+                                                                                              ),
+                                                                                              elevation: 0,
+                                                                                            ),
+                                                                                            child: Text(
+                                                                                              hobby,
+                                                                                              style: TextStyle(
+                                                                                                fontSize: 14,
+                                                                                                color: _hobbies.contains(hobby)
+                                                                                                    ? Colors.white // Text color for selected state
+                                                                                                    : Colors.black87, // Text color for unselected state
+                                                                                              ),
+                                                                                            ),
+                                                                                          );
+                                                                                        }).toList(),
+                                                                                      ),
+                                                                                    );
+                                                                                  },
+                                                                                  validator: (value) {
+                                                                                    if (_hobbies.isEmpty) {
+                                                                                      return 'Please select at least one hobby';
+                                                                                    }
+                                                                                    return null;
+                                                                                  },
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 24),
+                                                                              // Submit Button
+                                                                              ElevatedButton(
+                                                                                onPressed: () {
+                                                                                  if (_formKey.currentState!.validate()) {
+                                                                                    _formKey.currentState!.save();
+                                                                                    setState(() {
+                                                                                      Map<String,dynamic> updatedUser = Map.from(user);
+                                                                                      String userId = user['id'];
+                                                                                      updatedUser[FULLNAME] = _fullName.text;
+                                                                                      updatedUser[PHONE] = _phoneNumber.text;
+                                                                                      updatedUser[EMAIL] = _email.text;
+                                                                                      updatedUser[DOB] = _dobController.text;
+                                                                                      updatedUser[GENDER] = _gender;
+                                                                                      updatedUser[CITY] = _city;
+                                                                                      print("::: Updated Hobbies ${_hobbies.join(",")}");
+                                                                                      updatedUser[HOBBIES] = _hobbies.join(",");
+                                                                                      //region LocalDB
+                                                                                      //Update method of Local DB
+                                                                                      // myDatabase.updateUserInUsersTable(userId, updatedUser);
+                                                                                      //endregion
+                                                                                      //Mehtod Of API to edit the user
+                                                                                      myAPIService.editUser(userId, updatedUser);
+                                                                                      fetchUsersWithAPI();
+                                                                                      _fullName.clear();
+                                                                                      _phoneNumber.clear();
+                                                                                      _email.clear();
+                                                                                      _dobController.clear();
+                                                                                      _religion.clear();
+                                                                                      _gender = null;
+                                                                                      _city = null;
+                                                                                      _hobbies.clear();
+                                                                                      Navigator.of(context).pop();
+                                                                                    });
+                                                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                                                      SnackBar(content: Text('Profile edited successfully!',selectionColor: Colors.red,)),
+                                                                                    );
+                                                                                    fetchUsersWithAPI();
+                                                                                  }
+                                                                                },
+                                                                                style: ElevatedButton.styleFrom(
+                                                                                  backgroundColor: Color(0XFFa4133c),
+                                                                                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                                                                                  shape: RoundedRectangleBorder(
+                                                                                    borderRadius: BorderRadius.circular(12),
+                                                                                  ),
+                                                                                  elevation: 3,
+                                                                                ),
+                                                                                child: Text(
+                                                                                  'Save Profile',
+                                                                                  style: TextStyle(
+                                                                                    color: Colors.white,
+                                                                                    fontSize: 18,
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 24),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              },
+                                                            );
+                                                          }
+                                                      );
+                                                    },);
+                                                  ;
+                                                },
+                                                child: Container(
+                                                  height: 40,
+                                                  decoration: BoxDecoration(
+                                                      color: Color(0XFF800f2f).withOpacity(0.1),
+                                                      border: Border.all(style: BorderStyle.solid),
+                                                      borderRadius:BorderRadius.circular(10)
+                                                  ),
+                                                  width: 90,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      Padding(
+                                                          padding: const EdgeInsets.only(left: 8),
+                                                          child: Text('Edit',style: TextStyle(fontSize: 16,),)
                                                       ),
-                                                    ),
-                                                    SizedBox(width: 5),
-                                                    Text(
-                                                      userAge.toString(),
-                                                      style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-                                                    ),
-                                                    Text(" | ",style: TextStyle(color: Colors.black,fontSize: 20),),
-                                                    Icon(
-                                                      isUserMale ? Icons.male : Icons.female,
-                                                      size: 18,
-                                                      color: Color(0XFF800f2f),
-                                                    ),
-                                                    SizedBox(width: 5),
-                                                    Text(
-                                                      user[GENDER],
-                                                      style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-                                                    ),
-                                                    Text(" | ",style: TextStyle(color: Colors.black,fontSize: 20),),
-                                                    Icon(
-                                                      Icons.location_city,                                            size: 18,
-                                                      color: Color(0XFF800f2f),
-                                                    ),
-                                                    SizedBox(width: 5),
-                                                    Expanded(
-                                                      child: Text(
-                                                        user[CITY],
-                                                        overflow: TextOverflow.ellipsis,
-                                                        style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-                                                      ),
-                                                    ),
-                                                  ],
+                                                      SizedBox(width: 12),
+                                                      Icon(Icons.edit_note_rounded, color: Colors.brown[700], size: 30,),
+                                                    ],
+                                                  ),
                                                 ),
+                                              ),
+                                              SizedBox(width: 24,),
+                                              //Delete
+                                              InkWell(
+                                                onTap: () async {
+                                                  //region LocalDB
+                                                  // Local DB
+                                                  // int userId = user['id'];
+                                                  //region LocalDB
+                                                  String userId = user['id'];
+                                                  return showDialog<void>(
+                                                    context: context,
+                                                    barrierDismissible: false, // user must tap button!
+                                                    builder: (BuildContext context) {
+                                                      return SizedBox(
+                                                        width: 600,
+                                                        child: AlertDialog(
+                                                          backgroundColor: Color(0XFFfff0f3),
+                                                          title: Row(
+                                                            children: [
+                                                              Icon(Icons.delete,color: Color(0XFFa4133c),size: 35,),
+                                                              SizedBox(width: 10,),
+                                                              const Text('Are You Sure ?',style: TextStyle(color: Color(0XFFc9184a)),),
+                                                            ],
+                                                          ),
+                                                          content: const SingleChildScrollView(
+                                                            child: ListBody(
+                                                              children: <Widget>[
+                                                                Text('You are going to remove the User!!',style: TextStyle(color: Colors.black54),),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          actions: <Widget>[
+                                                            TextButton(
+                                                              child: const Text('Yes, Remove user!',style: TextStyle(color: Color(0XFFa4133c)),),
+                                                              onPressed: () {
+                                                                //region LocalDB
+                                                                //Delete From LocalDB
+                                                                // myDatabase.deleteUserFromUsersTable(userId);
+                                                                //endregion
+                                                                myAPIService.deleteUser(userId);
+                                                                fetchUsersWithAPI();
+                                                                Navigator.of(context).pop();
+                                                              },
+                                                            ),
+                                                            TextButton(onPressed: (){
+                                                              Navigator.of(context).pop();
+                                                            }, child: Text('Cancel',style: TextStyle(color: Colors.black),))
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: Container(
+                                                  height: 40,
+                                                  decoration: BoxDecoration(
+                                                      color: Color(0XFF800f2f).withOpacity(0.1),
+                                                      border: Border.all(style: BorderStyle.solid),
+                                                      borderRadius:BorderRadius.circular(10)
+                                                  ),
+                                                  width: 95,
+                                                  child: Row(
+                                                    children: [
+                                                      Padding(
+                                                        padding: const EdgeInsets.only(left: 10),
+                                                        child: Text('Delete'),
+                                                      ),
+                                                      SizedBox(width: 5,),
+                                                      Icon(Icons.delete, color: Colors.brown[700], size: 26),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width:24),
+                                              //Favorite
+                                              IconButton(
+                                                visualDensity : VisualDensity.compact,
+                                                onPressed: () async {
+                                                   String userId = user['id'];
+                                                  //region LocalDB
+                                                   //Local
+                                                   // int newFavStatus = (user[ISUSERFAV] == 1) ? 0 : 1;
+                                                   //endregion
+                                                  bool newFavStatus = (user[ISUSERFAV] == true) ? false : true;
+                                                  //region LocalDB
+                                                  // await myDatabase.makeUserFav(userId, newFavStatus);
+                                                  //endregion
+                                                   showDialog(context: context, builder: (context) {
+                                                     return Center(child: Expanded(child: CircularProgressIndicator(color: Color(0XFF590d22),)));
+                                                   },);
+                                                  await myAPIService.editUser(userId,{ISUSERFAV : newFavStatus});
+                                                  await fetchUsersWithAPI();
+                                                  Navigator.of(context).pop();
+                                                  setState(() {
+
+                                                  });
+                                                },
+                                                icon: (user[ISUSERFAV] == true)
+                                                    ? Icon(Icons.favorite, color: Colors.redAccent, size: 26,)
+                                                    : Icon(Icons.favorite_outline_rounded, color:  Colors.brown[700], size: 28,),
                                               ),
                                             ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                    Divider(thickness: 1,height: 18,color: Colors.black38,),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 5,top: 2),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          InkWell(
-                                            onTap: () {
-                                              _fullName.text = user[FULLNAME];
-                                              _phoneNumber.text = user[PHONE];
-                                              _email.text = user[EMAIL];
-                                              _dobController.text = user[DOB];
-                                              _gender = user[GENDER];
-                                              _city = user[CITY];
-                                              _pickedYear = DateFormat('dd-MM-yyyy').parse(user[DOB]).year;
-                                              _hobbies = (user[HOBBIES] as String).split(",").toList();
-
-                                              print("picked year from edit : $_pickedYear");
-
-                                              if (user[DOB] != null && user[DOB].isNotEmpty) {
-                                                DateTime dob = DateFormat('dd-MM-yyyy').parse(user[DOB]);
-                                                _pickedYear = dob.year;
-                                              } else {
-                                                _pickedYear = null; // Handle null or empty DOB
-                                              }
-
-                                              showModalBottomSheet(context: context,isScrollControlled: true,
-                                                builder: (context) {
-                                                  return StatefulBuilder(
-                                                      builder: (BuildContext context, StateSetter setState) {
-                                                        return DraggableScrollableSheet(
-                                                          initialChildSize: 1, // Full height
-                                                          minChildSize: 0.5, // Minimum height when dragged down
-                                                          maxChildSize: 1, // Maximum height
-                                                          builder: (_, controller) {
-                                                            return SafeArea(
-                                                              child: Padding(
-                                                                padding: const EdgeInsets.all(12.0),
-                                                                child: Container(
-                                                                  height: 400,
-                                                                  child: SingleChildScrollView(
-                                                                    scrollDirection: Axis.vertical,
-                                                                    child: Form(
-                                                                      key:_formKey,
-                                                                      child: Column(
-                                                                        children: [
-                                                                          //Cancel Button
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.only(top: 15),
-                                                                            child: IconButton(onPressed: (){
-                                                                              Navigator.of(context).pop();
-                                                                            }, icon: Icon(Icons.cancel_outlined),iconSize: 35,),
-                                                                          ),
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.only(top: 20),
-                                                                            child: Row(
-                                                                              children: [Icon(Icons.person_outline_rounded,size: 30,color: Color(0XFF800f2f),),
-                                                                                SizedBox(width: 10,),
-                                                                                Text('Person Details',style: TextStyle(fontSize: 20),)],
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(height: 10,),
-                                                                          // Full Name Field
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                                            child: TextFormField(
-                                                                              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-z,A-Z]'))],
-                                                                              textCapitalization: TextCapitalization.words,
-                                                                              controller: _fullName,
-                                                                              keyboardType: TextInputType.text,
-                                                                              decoration: _inputDecoration(
-                                                                                labelText: 'Full Name',
-                                                                                prefixIcon: Icons.person_2_outlined,
-                                                                              ),
-                                                                              validator: (value) {
-                                                                                if (value!.isEmpty) {
-                                                                                  return 'Please enter your full name';
-                                                                                }
-                                                                                return null;
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                          // Phone Number Field
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                                            child: TextFormField(
-                                                                              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))],
-                                                                              controller: _phoneNumber,
-                                                                              keyboardType: TextInputType.phone,
-                                                                              decoration: _inputDecoration(
-                                                                                labelText: 'Phone Number',
-                                                                                prefixIcon: Icons.phone_outlined,
-                                                                              ),
-                                                                              validator: (value) {
-                                                                                if (value!.isEmpty) {
-                                                                                  return 'Please enter your phone number';
-                                                                                } else if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
-                                                                                  return 'Please enter a valid 10-digit phone number';
-                                                                                }
-                                                                                return null;
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                          // Email Field
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                                            child: TextFormField(
-                                                                              controller: _email,
-                                                                              keyboardType: TextInputType.emailAddress,
-                                                                              decoration: _inputDecoration(
-                                                                                labelText: 'Email Address',
-                                                                                prefixIcon: Icons.email_outlined,
-                                                                              ),
-                                                                              validator: (value) {
-                                                                                if (value!.isEmpty) {
-                                                                                  return 'Please enter your email';
-                                                                                } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                                                                                  return 'Please enter a valid email';
-                                                                                }
-                                                                                return null;
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                          // Date of Birth Field
-                                                                          SizedBox(height: 20,),
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.all(2.0),
-                                                                            child: Row(
-                                                                              children: [Icon(Icons.cake_outlined,size: 30,color: Color(0XFF800f2f),),
-                                                                                SizedBox(width: 10,),
-                                                                                Text('Birth Date',style: TextStyle(fontSize: 20),)],
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(height: 10,),
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                                            child: TextFormField(
-                                                                              readOnly: true,
-                                                                              controller: _dobController,
-                                                                              decoration: _inputDecoration(
-                                                                                labelText: 'Date of Birth',
-                                                                                prefixIcon: Icons.calendar_today_outlined,
-                                                                              ),
-                                                                              onTap: () async {
-                                                                                DateTime? pickedDate = await showDatePicker(
-                                                                                  context: context,
-                                                                                  initialDate: DateTime.now(),
-                                                                                  firstDate: DateTime(1900),
-                                                                                  lastDate: DateTime.now(),
-                                                                                );
-                                                                                if (pickedDate != null) {
-                                                                                  setState(() {
-                                                                                    _pickedYear = pickedDate.year;
-                                                                                    print('Picked year from edit : ${_pickedYear}');
-                                                                                    _dobController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
-                                                                                  });
-                                                                                }
-                                                                              },
-                                                                              validator: (value) {
-                                                                                if (value!.isEmpty) {
-                                                                                  return 'Please select your date of birth';
-                                                                                }
-                                                                                if ((DateTime.now().year - _pickedYear!) < 18) {
-                                                                                  return 'Age must be above 18 years!!';
-                                                                                }
-                                                                                return null;
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(height: 20,),
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.all(2.0),
-                                                                            child: Row(
-                                                                              children: [
-                                                                                Icon(Icons.wc_outlined, size: 30, color: Color(0XFF800f2f)),
-                                                                                SizedBox(width: 10),
-                                                                                Text('Gender', style: TextStyle(fontSize: 20)),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(height: 10),
-                                                                          // Gender Field
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                                            child: FormField<String>(
-                                                                              builder: (FormFieldState<String> state) {
-                                                                                return InputDecorator(
-                                                                                  decoration: _inputDecoration(
-                                                                                    labelText: 'Gender',
-                                                                                    prefixIcon: Icons.wc_outlined,
-                                                                                  ).copyWith(errorText: state.errorText),
-                                                                                  child: Wrap(
-                                                                                    spacing: 16,
-                                                                                    runSpacing: 8,
-                                                                                    children: [
-                                                                                      Row(
-                                                                                        mainAxisSize: MainAxisSize.min,
-                                                                                        children: [
-                                                                                          Radio<String>(
-                                                                                            value: 'Male',
-                                                                                            groupValue: _gender,
-                                                                                            onChanged: (value) {
-                                                                                              setState(() {
-                                                                                                _gender = value; // Update the gender value
-                                                                                                state.didChange(value); // Notify the FormField of the change
-                                                                                              });
-                                                                                            },
-                                                                                            activeColor: Color(0XFFa4133c),
-                                                                                          ),
-                                                                                          Text(
-                                                                                            'Male',
-                                                                                            style: TextStyle(fontSize: 16, color: Colors.black87),
-                                                                                          ),
-                                                                                        ],
-                                                                                      ),
-                                                                                      Row(
-                                                                                        mainAxisSize: MainAxisSize.min,
-                                                                                        children: [
-                                                                                          Radio<String>(
-                                                                                            value: 'Female',
-                                                                                            groupValue: _gender,
-                                                                                            onChanged: (value) {
-                                                                                              setState(() {
-                                                                                                _gender = value; // Update the gender value
-                                                                                                state.didChange(value); // Notify the FormField of the change
-                                                                                              });
-                                                                                            },
-                                                                                            activeColor: Color(0XFFa4133c),
-                                                                                          ),
-                                                                                          Text(
-                                                                                            'Female',
-                                                                                            style: TextStyle(fontSize: 16, color: Colors.black87),
-                                                                                          ),
-                                                                                        ],
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                );
-                                                                              },
-                                                                              validator: (value) {
-                                                                                if (_gender == null) {
-                                                                                  return 'Please select your gender'; // Validation message
-                                                                                }
-                                                                                return null;
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(height: 10,),
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.all(2.0),
-                                                                            child: Row(
-                                                                              children: [Icon(Icons.location_city_outlined,size: 30,color: Color(0XFF800f2f),),
-                                                                                SizedBox(width: 10,),
-                                                                                Text('City',style: TextStyle(fontSize: 20),)],
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(height: 10,),
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                                            child: DropdownButtonFormField<String>(
-                                                                              value: _city,
-                                                                              decoration: _inputDecoration(
-                                                                                labelText: 'City',
-                                                                              ),
-                                                                              icon: Icon(Icons.arrow_drop_down),
-                                                                              //city option array
-                                                                              items: [
-                                                                                "Ahmedabad",
-                                                                                "Surat",
-                                                                                "Vadodara",
-                                                                                "Rajkot",
-                                                                                "Bhavnagar",
-                                                                                "Jamnagar",
-                                                                                "Junagadh",
-                                                                                "Gandhinagar",
-                                                                                "Anand",
-                                                                                "Morbi",
-                                                                                "Nadiad",
-                                                                                "Mehsana",
-                                                                                "Bharuch",
-                                                                                "Navsari",
-                                                                                "Porbandar",
-                                                                                "Vapi",
-                                                                                "Valsad",
-                                                                                "Palanpur",
-                                                                                "Gondal",
-                                                                                "Godhra",
-                                                                                "Veraval",
-                                                                                "Patan",
-                                                                                "Kalol",
-                                                                                "Dahod",
-                                                                                "Botad",
-                                                                                "Amreli",
-                                                                                "Surendranagar",
-                                                                                "Himatnagar",
-                                                                                "Modasa",
-                                                                                "Mahesana",
-                                                                                "Dwarka",
-                                                                                "Mandvi",
-                                                                                "Ankleshwar",
-                                                                                "Deesa",
-                                                                                "Bhuj",
-                                                                                "Kadi",
-                                                                                "Visnagar",
-                                                                                "Dholka",
-                                                                                "Sanand",
-                                                                                "Wadhwan",
-                                                                                "Unjha",
-                                                                                "Halol",
-                                                                                "Chhota Udaipur",
-                                                                                "Lunawada",
-                                                                                "Savarkundla",
-                                                                                "Mahuva",
-                                                                                "Manavadar",
-                                                                                "Viramgam",
-                                                                                "Bodeli",
-                                                                                "Jetpur",
-                                                                                "Dhoraji",
-                                                                                "Jasdan",
-                                                                                "Khambhat",
-                                                                                "Keshod",
-                                                                                "Talaja",
-                                                                                "Mangrol",
-                                                                                "Bagasara",
-                                                                                "Umreth",
-                                                                                "Sihor",
-                                                                                "Petlad",
-                                                                                "Gadhada",
-                                                                                "Bhanvad",
-                                                                                "Vijapur",
-                                                                                "Radhanpur",
-                                                                                "Kutch",
-                                                                                "Kapadvanj",
-                                                                                "Tharad",
-                                                                                "Bayad",
-                                                                                "Idar",
-                                                                                "Mansa",
-                                                                                "Dabhoi",
-                                                                                "Karjan",
-                                                                                "Songadh",
-                                                                                "Bilkha",
-                                                                                "Okha",
-                                                                                "Jhalod",
-                                                                                "Mangrol (Junagadh)"
-                                                                              ]
-                                                                                  .map(
-                                                                                    (city) => DropdownMenuItem<String>(
-                                                                                  value: city,
-                                                                                  child: Text(
-                                                                                    city,
-                                                                                    style: TextStyle(color: Colors.black87),
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                                  .toList(),
-                                                                              onChanged: (value) {
-                                                                                _city = value;
-                                                                              },
-                                                                              validator: (value) {
-                                                                                if (value == null || value.isEmpty) {
-                                                                                  return 'Please select your city';
-                                                                                }
-                                                                                return null;
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                          // Hobbies Field
-                                                                          SizedBox(height: 20,),
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.all(2.0),
-                                                                            child: Row(
-                                                                              children: [Icon(Icons.interests,size: 30,color: Color(0XFF800f2f),),
-                                                                                SizedBox(width: 10,),
-                                                                                Text('Hobbies',style: TextStyle(fontSize: 20),)],
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(height: 12,),
-                                                                          Padding(
-                                                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                                            child: FormField(
-                                                                              builder: (FormFieldState state) {
-                                                                                return InputDecorator(
-                                                                                  decoration: _inputDecoration(
-                                                                                    labelText: 'Hobbies',
-                                                                                  ).copyWith(errorText: state.errorText),
-                                                                                  child: Wrap(
-                                                                                    spacing: 28, // Horizontal spacing between buttons
-                                                                                    runSpacing: 8, // Vertical spacing between buttons
-                                                                                    children: _hobbiesOptions.map((hobby) {
-                                                                                      return ElevatedButton(
-                                                                                        onPressed: () {
-                                                                                          setState(() {
-                                                                                            if (_hobbies.contains(hobby)) {
-                                                                                              _hobbies.remove(hobby);
-                                                                                              print(_hobbies);// Deselect if already selected
-                                                                                            } else {
-                                                                                              _hobbies.add(hobby);
-                                                                                              print(_hobbies);// Select if not already selected
-                                                                                            }
-                                                                                          });
-                                                                                          setState(() {
-                                                                                            print('Hobbies updated!!');
-                                                                                          });
-                                                                                        },
-                                                                                        style: ElevatedButton.styleFrom(
-                                                                                          backgroundColor: _hobbies.contains(hobby)
-                                                                                              ? Color(0XFFc9184a).withOpacity(0.7) // Selected state
-                                                                                              : Color(0XFF800f2f).withOpacity(0.2), // Unselected state
-                                                                                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                                                                          shape: RoundedRectangleBorder(
-                                                                                            borderRadius: BorderRadius.circular(20),
-                                                                                          ),
-                                                                                          elevation: 0,
-                                                                                        ),
-                                                                                        child: Text(
-                                                                                          hobby,
-                                                                                          style: TextStyle(
-                                                                                            fontSize: 14,
-                                                                                            color: _hobbies.contains(hobby)
-                                                                                                ? Colors.white // Text color for selected state
-                                                                                                : Colors.black87, // Text color for unselected state
-                                                                                          ),
-                                                                                        ),
-                                                                                      );
-                                                                                    }).toList(),
-                                                                                  ),
-                                                                                );
-                                                                              },
-                                                                              validator: (value) {
-                                                                                if (_hobbies.isEmpty) {
-                                                                                  return 'Please select at least one hobby';
-                                                                                }
-                                                                                return null;
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(height: 24),
-                                                                          // Submit Button
-                                                                          ElevatedButton(
-                                                                            onPressed: () {
-                                                                              if (_formKey.currentState!.validate()) {
-                                                                                _formKey.currentState!.save();
-                                                                                setState(() {
-                                                                                  Map<String,dynamic> updatedUser = Map.from(user);
-                                                                                  int userId = user['id'];
-                                                                                  updatedUser[FULLNAME] = _fullName.text;
-                                                                                  updatedUser[PHONE] = _phoneNumber.text;
-                                                                                  updatedUser[EMAIL] = _email.text;
-                                                                                  updatedUser[DOB] = _dobController.text;
-                                                                                  updatedUser[GENDER] = _gender;
-                                                                                  updatedUser[CITY] = _city;
-                                                                                  updatedUser[HOBBIES] = _hobbies.join(",");
-                                                                                  myDatabase.updateUserInUsersTable(userId, updatedUser);
-                                                                                  _fullName.clear();
-                                                                                  _phoneNumber.clear();
-                                                                                  _email.clear();
-                                                                                  _dobController.clear();
-                                                                                  _religion.clear();
-                                                                                  _gender = null;
-                                                                                  _city = null;
-                                                                                  _hobbies.clear();
-                                                                                  Navigator.of(context).pop();
-                                                                                });
-                                                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                                                  SnackBar(content: Text('Profile edited successfully!',selectionColor: Colors.red,)),
-                                                                                );
-                                                                                fetchUsers();
-                                                                              }
-                                                                            },
-                                                                            style: ElevatedButton.styleFrom(
-                                                                              backgroundColor: Color(0XFFa4133c),
-                                                                              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                                                                              shape: RoundedRectangleBorder(
-                                                                                borderRadius: BorderRadius.circular(12),
-                                                                              ),
-                                                                              elevation: 3,
-                                                                            ),
-                                                                            child: Text(
-                                                                              'Save Profile',
-                                                                              style: TextStyle(
-                                                                                color: Colors.white,
-                                                                                fontSize: 18,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(height: 24),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            );
-                                                          },
-                                                        );
-                                                      }
-                                                  );
-                                                },);
-                                              ;
-                                            },
-                                            child: Container(
-                                              height: 40,
-                                              decoration: BoxDecoration(
-                                                color: Color(0XFF800f2f).withOpacity(0.1),
-                                                border: Border.all(style: BorderStyle.solid),
-                                                borderRadius:BorderRadius.circular(10)
-                                              ),
-                                              width: 90,
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(left: 8),
-                                                    child: Text('Edit',style: TextStyle(fontSize: 16,),)
-                                                  ),
-                                                  SizedBox(width: 12),
-                                                  Icon(Icons.edit_note_rounded, color: Colors.brown[700], size: 30,),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(width: 24,),
-                                          //Delete
-                                          InkWell(
-                                            onTap: () async {
-                                              int userId = user['id'];
-                                              return showDialog<void>(
-                                                context: context,
-                                                barrierDismissible: false, // user must tap button!
-                                                builder: (BuildContext context) {
-                                                  return SizedBox(
-                                                    width: 600,
-                                                    child: AlertDialog(
-                                                      backgroundColor: Color(0XFFfff0f3),
-                                                      title: Row(
-                                                        children: [
-                                                          Icon(Icons.delete,color: Color(0XFFa4133c),size: 35,),
-                                                          SizedBox(width: 10,),
-                                                          const Text('Are You Sure ?',style: TextStyle(color: Color(0XFFc9184a)),),
-                                                        ],
-                                                      ),
-                                                      content: const SingleChildScrollView(
-                                                        child: ListBody(
-                                                          children: <Widget>[
-                                                            Text('You are going to remove the User!!',style: TextStyle(color: Colors.black54),),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      actions: <Widget>[
-                                                        TextButton(
-                                                          child: const Text('Yes, Remove user!',style: TextStyle(color: Color(0XFFa4133c)),),
-                                                          onPressed: () {
-                                                            myDatabase.deleteUserFromUsersTable(userId);
-                                                            fetchUsers();
-                                                            Navigator.of(context).pop();
-                                                          },
-                                                        ),
-                                                        TextButton(onPressed: (){
-                                                          Navigator.of(context).pop();
-                                                        }, child: Text('Cancel',style: TextStyle(color: Colors.black),))
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
-                                              );
-                                            },
-                                            child: Container(
-                                              height: 40,
-                                              decoration: BoxDecoration(
-                                                  color: Color(0XFF800f2f).withOpacity(0.1),
-                                                  border: Border.all(style: BorderStyle.solid),
-                                                  borderRadius:BorderRadius.circular(10)
-                                              ),
-                                              width: 95,
-                                              child: Row(
-                                                children: [
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(left: 10),
-                                                    child: Text('Delete'),
-                                                  ),
-                                                  SizedBox(width: 5,),
-                                                  Icon(Icons.delete, color: Colors.brown[700], size: 26),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(width:24),
-                                          //Favorite
-                                          IconButton(
-                                            visualDensity : VisualDensity.compact,
-                                            onPressed: () async {
-                                              int userId = user['id'];
-                                              int newFavStatus = (user[ISUSERFAV] == 1) ? 0 : 1;
-                                              await myDatabase.makeUserFav(userId, newFavStatus);
-                                              await fetchUsers();
-                                            },
-                                            icon: (user[ISUSERFAV] == 1)
-                                                ? Icon(Icons.favorite, color: Colors.redAccent, size: 26,)
-                                                : Icon(Icons.favorite_outline_rounded, color: Colors.brown[700], size: 28,),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            ],
+                                  )
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      onTap: () {
-                        _showFullDetailsBottomSheet(context, user);
+                          onTap: () {
+                            _showFullDetailsBottomSheet(context, user);
+                          },
+                        );
                       },
-                    );
-                  },
-                ),
-              ),
+                    ),
+                  );
+                }
+                else{
+                  return Expanded(child: Center(child: CircularProgressIndicator(color: Color(0XFF590d22),)));
+                }
+              },)
             ],
           ),
         ),

@@ -1,4 +1,5 @@
 
+import 'package:bondify/API/APIService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -12,7 +13,12 @@ class AddProfile extends StatefulWidget {
 }
 
 class _AddProfileState extends State<AddProfile> {
-  DB myDatabase = DB();
+  //region LocalDB
+  //For LocalDB
+  // DB myDatabase = DB();
+  //endregion
+
+  APIService myAPIService = APIService();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _dobController = TextEditingController();
   TextEditingController _fullName = TextEditingController();
@@ -489,8 +495,11 @@ class _AddProfileState extends State<AddProfile> {
                           user[GENDER] = _gender;
                           user[CITY] = _city;
                           user[HOBBIES] = _hobbies.join(",");
-                          myDatabase.addUserInUsersTable(user);
+                          //DB Method
+                          // myDatabase.addUserInUsersTable(user);
 
+                          //API
+                          myAPIService.addUser(user);
                           // Clear the form fields after submission.
                           _fullName.clear();
                           _phoneNumber.clear();
