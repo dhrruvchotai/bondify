@@ -7,7 +7,7 @@ class APIService{
 
   Future<List<Map<String,dynamic>>> fetchUsers() async{
     final res = await http.get(Uri.parse(API));
-    if(res.statusCode == 200){
+    if(res.statusCode == 200){  
       return List<Map<String,dynamic>>.from(jsonDecode(res.body));
     }
     else{
